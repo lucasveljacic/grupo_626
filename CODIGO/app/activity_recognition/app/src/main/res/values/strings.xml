@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">activityrecognition</string>
+    <string name="title_activity_login">Login</string>
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_sign_in">Sign in or register</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="welcome">"Welcome !"</string>
+    <string name="invalid_username">Not a valid username</string>
+    <string name="invalid_password">Password must be >5 characters</string>
+    <string name="login_failed">"Login failed"</string>
+    <string name="login">Login</string>
+    <string name="no_account_yet_create_one">Aun no estás registrado? Regístrate</string>
+    <string name="password">Password</string>
+    <string name="repeat_password">Repetir Password</string>
+    <string name="email">Email</string>
+    <string name="name">Nombre</string>
+    <string name="lastname">Apellido</string>
+    <string name="dni">DNI</string>
+    <string name="logo">Logo</string>
+    <string name="send">Enviar</string>
+    <string name="title_activity_signup">Registro de Usuario</string>
+</resources>
