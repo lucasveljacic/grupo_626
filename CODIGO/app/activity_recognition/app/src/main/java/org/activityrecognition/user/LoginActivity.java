@@ -13,13 +13,26 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.textfield.TextInputLayout;
 
 import org.activityrecognition.R;
+import org.activityrecognition.client.user.LoginDTO;
+import org.activityrecognition.client.user.UserClient;
+import org.activityrecognition.client.user.UserClientFactory;
+import org.activityrecognition.client.user.UserDTO;
+import org.activityrecognition.client.user.UserResponse;
+
+import java.util.Objects;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class LoginActivity extends AppCompatActivity {
     private static final String TAG = "LoginActivity";
     private static final int REQUEST_SIGNUP = 0;
 
-    private TextInputLayout username;
-    private TextInputLayout password;
+    private UserClient client;
+
+    private TextInputLayout inputEmail;
+    private TextInputLayout inputPassword;
     private Button loginButton;
     private TextView signUpLink;
 
@@ -27,9 +40,11 @@ public class LoginActivity extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-        username = findViewById(R.id.input_email);
-        password = findViewById(R.id.input_password);
+
+        inputEmail = findViewById(R.id.input_email);
+        inputPassword = findViewById(R.id.input_password);
         loginButton = findViewById(R.id.btn_login);
+
         signUpLink = findViewById(R.id.link_signup);
 
         loginButton.setOnClickListener(v -> login());
@@ -39,40 +54,56 @@ public class LoginActivity extends AppCompatActivity {
             Intent intent = new Intent(getApplicationContext(), SignUpActivity.class);
             startActivityForResult(intent, REQUEST_SIGNUP);
             finish();
-            //overridePendingTransition(R.anim.push_left_in, R.anim.push_left_out);
         });
+
+        client = UserClientFactory.getClient();
     }
 
     public void login() {
         Log.d(TAG, "Login");
 
         if (!validate()) {
-            onLoginFailed();
+            onLoginFailed("Error de validación");
             return;
         }
 
         loginButton.setEnabled(false);
 
         final ProgressDialog progressDialog = new ProgressDialog(LoginActivity.this);
-                //R.style.AppTheme_Dark_Dialog);
         progressDialog.setIndeterminate(true);
-        progressDialog.setMessage("Authenticating...");
+        progressDialog.setMessage("Realizando el login");
         progressDialog.show();
 
-        String email = this.username.getEditText().getText().toString();
-        String password = this.password.getEditText().getText().toString();
+        String email = Objects.requireNonNull(this.inputEmail.getEditText()).getText().toString();
+        String password = Objects.requireNonNull(this.inputPassword.getEditText()).getText().toString();
 
-        // TODO: Implement your own authentication logic here.
+        // launch a thread with the http call to the external service
+        LoginDTO loginDTO = new LoginDTO("DEV", email, password);
+        Call<UserResponse> call = client.login(loginDTO);
 
-        new android.os.Handler().postDelayed(
-                new Runnable() {
-                    public void run() {
-                        // On complete call either onLoginSuccess or onLoginFailed
-                        onLoginSuccess();
-                        // onLoginFailed();
-                        progressDialog.dismiss();
-                    }
-                }, 3000);
+        Log.i(TAG, String.format("Login request: %s", loginDTO.toString()));
+
+        call.enqueue(new Callback<UserResponse>() {
+            @Override
+            public void onResponse(Call<UserResponse> call, Response<UserResponse> response) {
+                progressDialog.dismiss();
+                if (response.isSuccessful()) {
+                    Log.i(TAG, String.format("User logged in successfully! %s", response.body().toString()));
+                    onLoginSuccess();
+                } else {
+                    Log.i(TAG, String.format("User logged in failure! %s", response.raw().toString()));
+                    onLoginFailed(response.raw().toString());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<UserResponse> call, Throwable t) {
+                progressDialog.dismiss();
+                Log.e(TAG, "Unable to Login User."+ t.getMessage());
+                t.printStackTrace();
+                onLoginFailed(t.getMessage());
+            }
+        });
     }
 
     @Override
@@ -80,9 +111,6 @@ public class LoginActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_SIGNUP) {
             if (resultCode == RESULT_OK) {
-
-                // TODO: Implement successful signup logic here
-                // By default we just finish the Activity and log them in automatically
                 this.finish();
             }
         }
@@ -99,30 +127,29 @@ public class LoginActivity extends AppCompatActivity {
         finish();
     }
 
-    public void onLoginFailed() {
-        Toast.makeText(getBaseContext(), "Login failed", Toast.LENGTH_LONG).show();
+    public void onLoginFailed(String errMessage) {
+        Toast.makeText(getBaseContext(), errMessage, Toast.LENGTH_LONG).show();
 
         loginButton.setEnabled(true);
     }
 
     public boolean validate() {
         boolean valid = true;
+        inputEmail.setError(null);
+        inputPassword.setError(null);
 
-        String email = username.getEditText().getText().toString();
-        String password = this.password.getEditText().getText().toString();
+        String email = inputEmail.getEditText().getText().toString();
+        String password = inputPassword.getEditText().getText().toString();
 
-        if (email.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            username.setError("enter a valid email address");
+
+        if (email.isEmpty()) {
+            inputEmail.setError("El email es requerido");
             valid = false;
-        } else {
-            username.setError(null);
         }
 
-        if (password.isEmpty() || password.length() < 4 || password.length() > 10) {
-            this.password.setError("between 4 and 10 alphanumeric characters");
+        if (password.isEmpty()) {
+            inputPassword.setError("El password es requerido");
             valid = false;
-        } else {
-            this.password.setError(null);
         }
 
         return valid;

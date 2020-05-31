@@ -1,10 +1,10 @@
-package org.activityrecognition.measure.client;
+package org.activityrecognition.client.measure;
 
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MeasureClientFactory {
     private static MeasureClient client;
-    private static final String BASE_URL = "http://192.168.0.8:8080";
+    private static final String BASE_URL = "http://3.23.104.237:8080";
 
     public static MeasureClient getClient() {
         if (client == null) {

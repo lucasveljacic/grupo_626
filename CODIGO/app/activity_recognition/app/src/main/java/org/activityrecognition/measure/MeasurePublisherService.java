@@ -7,9 +7,9 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
-import org.activityrecognition.measure.client.MeasureClient;
-import org.activityrecognition.measure.client.MeasureClientFactory;
-import org.activityrecognition.measure.client.MeasureRequest;
+import org.activityrecognition.client.measure.MeasureClient;
+import org.activityrecognition.client.measure.MeasureClientFactory;
+import org.activityrecognition.client.measure.MeasureRequest;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package org.activityrecognition.measure.client;
+package org.activityrecognition.client.measure;
 
 import java.io.Serializable;
 import java.util.List;

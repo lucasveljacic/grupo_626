@@ -12,58 +12,98 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.textfield.TextInputLayout;
 
 import org.activityrecognition.R;
+import org.activityrecognition.client.user.UserClient;
+import org.activityrecognition.client.user.UserClientFactory;
+import org.activityrecognition.client.user.UserDTO;
+import org.activityrecognition.client.user.UserResponse;
+
+import java.util.Objects;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class SignUpActivity extends AppCompatActivity {
     private static final String TAG = "SignUpActivity";
     private static final int REQUEST_SIGNUP = 0;
 
-    private TextInputLayout username;
-    private TextInputLayout password;
+    private UserClient client;
+
+    private TextInputLayout inputName;
+    private TextInputLayout inputLastName;
+    private TextInputLayout inputDni;
+    private TextInputLayout inputEmail;
+    private TextInputLayout inputPassword;
+    private TextInputLayout inputPasswordRepeat;
     private Button signUpButton;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_signup);
-        username = findViewById(R.id.input_email);
-        password = findViewById(R.id.input_password);
+
+        inputName = findViewById(R.id.input_name);
+        inputLastName = findViewById(R.id.input_lastname);
+        inputDni = findViewById(R.id.input_dni);
+        inputEmail = findViewById(R.id.input_email);
+        inputPassword = findViewById(R.id.input_password);
+        inputPasswordRepeat = findViewById(R.id.input_password_repeat);
         signUpButton = findViewById(R.id.btn_login);
 
         signUpButton.setOnClickListener(v -> signUp());
+
+        client = UserClientFactory.getClient();
     }
 
     public void signUp() {
         Log.d(TAG, "Signing Up");
 
         if (!validate()) {
-            onSignUpFailed();
+            onSignUpFailed("Error de validación");
             return;
         }
 
         signUpButton.setEnabled(false);
 
         final ProgressDialog progressDialog = new ProgressDialog(SignUpActivity.this);
-                //R.style.AppTheme_Dark_Dialog);
         progressDialog.setIndeterminate(true);
-        progressDialog.setMessage("Signing Up...");
+        progressDialog.setMessage("Registrando usuario");
         progressDialog.show();
 
-        String email = this.username.getEditText().getText().toString();
-        String password = this.password.getEditText().getText().toString();
+        String name = Objects.requireNonNull(this.inputName.getEditText()).getText().toString();
+        String lastName = Objects.requireNonNull(this.inputLastName.getEditText()).getText().toString();
+        Integer dni = Integer.valueOf(Objects.requireNonNull(this.inputDni.getEditText()).getText().toString());
+        String email = Objects.requireNonNull(this.inputEmail.getEditText()).getText().toString();
+        String password = Objects.requireNonNull(this.inputPassword.getEditText()).getText().toString();
 
-        // TODO: Implement your own authentication logic here.
+        // launch a thread with the http call to the external service
+        UserDTO userDTO = new UserDTO("DEV", name, lastName, dni, email, password);
+        Call<UserResponse> call = client.signUp(userDTO);
 
-        new android.os.Handler().postDelayed(
-                new Runnable() {
-                    public void run() {
-                        // On complete call either onSignUpSuccess or onSignUpFailed
-                        onSignUpSuccess();
-                        // onSignUpFailed();
-                        progressDialog.dismiss();
-                    }
-                }, 3000);
+        Log.i(TAG, String.format("SignUp request: %s", userDTO.toString()));
+
+        call.enqueue(new Callback<UserResponse>() {
+            @Override
+            public void onResponse(Call<UserResponse> call, Response<UserResponse> response) {
+                progressDialog.dismiss();
+                if (response.isSuccessful()) {
+                    Log.i(TAG, String.format("User signedUp successfully! %s", response.body().toString()));
+                    onSignUpSuccess();
+                } else {
+                    Log.i(TAG, String.format("User signedUp failure! %s", response.raw().toString()));
+                    onSignUpFailed(response.raw().toString());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<UserResponse> call, Throwable t) {
+                progressDialog.dismiss();
+                Log.e(TAG, "Unable to signedUp User."+ t.getMessage());
+                t.printStackTrace();
+                onSignUpFailed(t.getMessage());
+            }
+        });
     }
-
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -89,30 +129,79 @@ public class SignUpActivity extends AppCompatActivity {
         finish();
     }
 
-    public void onSignUpFailed() {
-        Toast.makeText(getBaseContext(), "Sign Up failed", Toast.LENGTH_LONG).show();
+    public void onSignUpFailed(String errMessage) {
+        Toast.makeText(getBaseContext(), errMessage, Toast.LENGTH_LONG).show();
 
         signUpButton.setEnabled(true);
     }
 
     public boolean validate() {
         boolean valid = true;
+        inputName.setError(null);
+        inputLastName.setError(null);
+        inputDni.setError(null);
+        inputEmail.setError(null);
+        inputPassword.setError(null);
+        inputPasswordRepeat.setError(null);
 
-        String email = username.getEditText().getText().toString();
-        String password = this.password.getEditText().getText().toString();
+        String name = inputName.getEditText().getText().toString();
+        String lastName = inputLastName.getEditText().getText().toString();
+        String dni = inputDni.getEditText().getText().toString();
+        String email = inputEmail.getEditText().getText().toString();
+        String password = inputPassword.getEditText().getText().toString();
+        String passwordRepeat = inputPasswordRepeat.getEditText().getText().toString();
 
-        if (email.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            username.setError("enter a valid email address");
+
+        if (email.isEmpty()) {
+            inputEmail.setError("El email es requerido");
             valid = false;
         } else {
-            username.setError(null);
+            if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                inputEmail.setError("Ingrese un correo válido");
+                valid = false;
+            }
         }
 
-        if (password.isEmpty() || password.length() < 4 || password.length() > 10) {
-            this.password.setError("between 4 and 10 alphanumeric characters");
+        if (name.isEmpty()) {
+            inputName.setError("El nombre es requerido");
+            valid = false;
+        }
+
+        if (lastName.isEmpty()) {
+            inputLastName.setError("El apellido es requerido");
+            valid = false;
+        }
+
+        if (dni.isEmpty()) {
+            inputDni.setError("El dni es requerido");
             valid = false;
         } else {
-            this.password.setError(null);
+            try {
+                Integer dniInt = Integer.valueOf(dni);
+            } catch (Exception e) {
+                inputDni.setError("El DNI dene estar compuesto solamente por números");
+                valid = false;
+            }
+        }
+
+        if (password.isEmpty()) {
+            inputPassword.setError("El password es requerido");
+            valid = false;
+        }
+
+        if (passwordRepeat.isEmpty()) {
+            inputPasswordRepeat.setError("Ingrese nuevamente el password");
+            valid = false;
+        }
+
+        if (inputPassword.getEditText().toString().length() < 8) {
+            inputPassword.setError("El password debe tener al menos 8 caracteres");
+            valid = false;
+        }
+
+        if (!password.isEmpty() && !passwordRepeat.isEmpty() && !password.equals(passwordRepeat)) {
+                this.inputPasswordRepeat.setError("Los passwords ingresados no son iguales");
+                valid = false;
         }
 
         return valid;
