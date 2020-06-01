@@ -20,7 +20,7 @@ import retrofit2.Response;
 public class MeasurePublisherService extends IntentService implements PacketListener {
 
     MeasureClient client;
-    private final String TAG = "MeasurePublisherService";
+    private final String TAG = "ACTREC_MEASURE";
 
     /**
      * Creates an IntentService.  Invoked by your subclass's constructor.

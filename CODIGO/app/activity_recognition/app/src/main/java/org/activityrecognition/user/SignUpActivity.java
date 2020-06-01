@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.textfield.TextInputLayout;
 
+import org.activityrecognition.MainActivity;
 import org.activityrecognition.R;
 import org.activityrecognition.client.user.UserClient;
 import org.activityrecognition.client.user.UserClientFactory;
@@ -24,8 +25,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class SignUpActivity extends AppCompatActivity {
-    private static final String TAG = "SignUpActivity";
-    private static final int REQUEST_SIGNUP = 0;
+    private static final String TAG = "ACTREC_SIGNUP";
 
     private UserClient client;
 
@@ -36,6 +36,7 @@ public class SignUpActivity extends AppCompatActivity {
     private TextInputLayout inputPassword;
     private TextInputLayout inputPasswordRepeat;
     private Button signUpButton;
+    private SessionManager session;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -53,6 +54,7 @@ public class SignUpActivity extends AppCompatActivity {
         signUpButton.setOnClickListener(v -> signUp());
 
         client = UserClientFactory.getClient();
+        session = new SessionManager(getApplicationContext());
     }
 
     public void signUp() {
@@ -88,6 +90,14 @@ public class SignUpActivity extends AppCompatActivity {
                 progressDialog.dismiss();
                 if (response.isSuccessful()) {
                     Log.i(TAG, String.format("User signedUp successfully! %s", response.body().toString()));
+
+                    String email = userDTO.getEmail();
+                    String model = email
+                            .replace("@", "_at_")
+                            .replace(".", "_");
+
+                    session.createLoginSession(response.body().getToken(), email, model);
+
                     onSignUpSuccess();
                 } else {
                     Log.i(TAG, String.format("User signedUp failure! %s", response.raw().toString()));
@@ -106,32 +116,18 @@ public class SignUpActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_SIGNUP) {
-            if (resultCode == RESULT_OK) {
-
-                // TODO: Implement successful signup logic here
-                // By default we just finish the Activity and log them in automatically
-                this.finish();
-            }
-        }
-    }
-
-    @Override
     public void onBackPressed() {
-        // Disable going back to the MainActivity
         moveTaskToBack(true);
     }
 
     public void onSignUpSuccess() {
-        signUpButton.setEnabled(true);
+        Intent i = new Intent(getApplicationContext(), MainActivity.class);
+        startActivity(i);
         finish();
     }
 
     public void onSignUpFailed(String errMessage) {
         Toast.makeText(getBaseContext(), errMessage, Toast.LENGTH_LONG).show();
-
         signUpButton.setEnabled(true);
     }
 

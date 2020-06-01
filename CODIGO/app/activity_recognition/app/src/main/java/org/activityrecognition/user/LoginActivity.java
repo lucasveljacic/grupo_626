@@ -12,11 +12,11 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.textfield.TextInputLayout;
 
+import org.activityrecognition.MainActivity;
 import org.activityrecognition.R;
 import org.activityrecognition.client.user.LoginDTO;
 import org.activityrecognition.client.user.UserClient;
 import org.activityrecognition.client.user.UserClientFactory;
-import org.activityrecognition.client.user.UserDTO;
 import org.activityrecognition.client.user.UserResponse;
 
 import java.util.Objects;
@@ -26,37 +26,36 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class LoginActivity extends AppCompatActivity {
-    private static final String TAG = "LoginActivity";
+    private static final String TAG = "ACTREC_LOGIN";
     private static final int REQUEST_SIGNUP = 0;
 
-    private UserClient client;
+    private UserClient userClient;
 
     private TextInputLayout inputEmail;
     private TextInputLayout inputPassword;
     private Button loginButton;
     private TextView signUpLink;
+    private SessionManager session;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        userClient = UserClientFactory.getClient();
+        session = new SessionManager(getApplicationContext());
+
         inputEmail = findViewById(R.id.input_email);
         inputPassword = findViewById(R.id.input_password);
         loginButton = findViewById(R.id.btn_login);
-
         signUpLink = findViewById(R.id.link_signup);
-
-        loginButton.setOnClickListener(v -> login());
 
         signUpLink.setOnClickListener(v -> {
             // Start the Sign Up activity
             Intent intent = new Intent(getApplicationContext(), SignUpActivity.class);
-            startActivityForResult(intent, REQUEST_SIGNUP);
-            finish();
+            startActivity(intent);
         });
-
-        client = UserClientFactory.getClient();
+        loginButton.setOnClickListener(v -> login());
     }
 
     public void login() {
@@ -79,7 +78,7 @@ public class LoginActivity extends AppCompatActivity {
 
         // launch a thread with the http call to the external service
         LoginDTO loginDTO = new LoginDTO("DEV", email, password);
-        Call<UserResponse> call = client.login(loginDTO);
+        Call<UserResponse> call = userClient.login(loginDTO);
 
         Log.i(TAG, String.format("Login request: %s", loginDTO.toString()));
 
@@ -89,6 +88,14 @@ public class LoginActivity extends AppCompatActivity {
                 progressDialog.dismiss();
                 if (response.isSuccessful()) {
                     Log.i(TAG, String.format("User logged in successfully! %s", response.body().toString()));
+
+                    String email = loginDTO.getEmail();
+                    String model = email
+                            .replace("@", "_at_")
+                            .replace(".", "_");
+
+                    session.createLoginSession(response.body().getToken(), email, model);
+
                     onLoginSuccess();
                 } else {
                     Log.i(TAG, String.format("User logged in failure! %s", response.raw().toString()));
@@ -107,29 +114,18 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_SIGNUP) {
-            if (resultCode == RESULT_OK) {
-                this.finish();
-            }
-        }
-    }
-
-    @Override
     public void onBackPressed() {
-        // Disable going back to the MainActivity
         moveTaskToBack(true);
     }
 
     public void onLoginSuccess() {
-        loginButton.setEnabled(true);
+        Intent i = new Intent(getApplicationContext(), MainActivity.class);
+        startActivity(i);
         finish();
     }
 
     public void onLoginFailed(String errMessage) {
         Toast.makeText(getBaseContext(), errMessage, Toast.LENGTH_LONG).show();
-
         loginButton.setEnabled(true);
     }
 
