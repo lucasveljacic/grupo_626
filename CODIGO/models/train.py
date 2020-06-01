@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import argparse
 import pandas as pd
 import numpy as np
 from numpy import array
@@ -15,17 +16,19 @@ from shutil import rmtree
 import warnings
 
 warnings.filterwarnings("ignore")
-    
-    
 # make the post request 
 start_time = time.time()
 
-# input
-base_path = "/tmp/models/model1"
+parser = argparse.ArgumentParser(description='Train model for activity recognition')
+parser.add_argument("--basepath", required=True, type=str, help="This is the base path for input and output data")
+
+args = parser.parse_args()
+
+base_path = args.basepath
 output_path = os.path.join(base_path, "model")
 input_path = os.path.join(base_path, "train")
 checkpoint_file = os.path.join(base_path, "best_model.h5")
-
+success_file = os.path.join(input_path, "SUCCESS")
 
 if not os.path.exists(input_path):
     exit(1)
@@ -35,6 +38,9 @@ if not os.path.exists(output_path):
 else:
     rmtree(output_path)
 
+if os.path.exists(success_file):
+    os.remove(success_file)
+    
 seed(1652)
 tf.set_random_seed(432)
 

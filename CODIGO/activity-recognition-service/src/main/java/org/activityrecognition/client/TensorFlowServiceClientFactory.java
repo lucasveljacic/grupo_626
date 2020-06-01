@@ -1,25 +1,19 @@
 package org.activityrecognition.client;
 
 import feign.Feign;
-import feign.Logger;
-import feign.gson.GsonDecoder;
-import feign.gson.GsonEncoder;
-import feign.okhttp.OkHttpClient;
-import feign.slf4j.Slf4jLogger;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import feign.httpclient.ApacheHttpClient;
+import feign.jackson.JacksonDecoder;
+import feign.jackson.JacksonEncoder;
 
-@Configuration
 public class TensorFlowServiceClientFactory {
 
-    @Bean
-    public TensorFlowServiceClient getTensorflowServiceClient() {
-        return Feign.builder()
-                .client(new OkHttpClient())
-                .encoder(new GsonEncoder())
-                .decoder(new GsonDecoder())
-                .logger(new Slf4jLogger(TensorFlowServiceClient.class))
-                .logLevel(Logger.Level.FULL)
-                .target(TensorFlowServiceClient.class, "http://localhost:9000");
+    public static TensorFlowServiceClient getClient() {
+        Feign.Builder builder = Feign.builder()
+                .client(new ApacheHttpClient())
+                .encoder(new JacksonEncoder())
+                .decoder(new JacksonDecoder())
+                .requestInterceptor(new OutboundRequestInterceptor());
+
+        return builder.target(TensorFlowServiceClient.class, "http://18.221.185.88:9000");
     }
 }

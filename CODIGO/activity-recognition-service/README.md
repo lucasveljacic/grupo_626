@@ -13,7 +13,7 @@
     After=syslog.target
     
     [Service]
-    WorkingDirectory=/opt
+    WorkingDirectory=/opt/activity-recognition
     User=activity-recognition-service
     ExecStart=/bin/java -Xms128m -Xmx512m -jar activity-recognition-service.jar
     SuccessExitStatus=143

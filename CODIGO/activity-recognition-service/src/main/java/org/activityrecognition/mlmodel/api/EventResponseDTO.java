@@ -1,33 +1,27 @@
 package org.activityrecognition.mlmodel.api;
 
-import org.activityrecognition.mlmodel.model.ModelState;
+public class EventResponseDTO {
+    private String message;
+    private ModelDTO model;
 
-public class ModelDTO {
-    private String id;
-    private ModelState state;
-    private String name;
-
-    public String getId() {
-        return id;
+    public EventResponseDTO(String message, ModelDTO modelDTO) {
+        this.message = message;
+        this.model = modelDTO;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public String getMessage() {
+        return message;
     }
 
-    public ModelState getState() {
-        return state;
+    public void setMessage(String message) {
+        this.message = message;
     }
 
-    public void setState(ModelState state) {
-        this.state = state;
+    public ModelDTO getModel() {
+        return model;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+    public void setModel(ModelDTO model) {
+        this.model = model;
     }
 }

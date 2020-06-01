@@ -25,20 +25,19 @@ public class ModelController {
 
     @RequestMapping(value = "/{id}",  method = PUT)
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<Void> create(@PathVariable("id") String id, @RequestBody ModelDTO resource) {
-        Preconditions.checkNotNull(resource);
+    public ResponseEntity<ModelDTO> create(@PathVariable("id") String id) {
         Model model = new Model();
-        model.setId(resource.getId());
+        model.setId(id);
         model.setName(id);
         model.setState(ModelState.NEW);
 
         service.create(model);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(entityToDTO(model), HttpStatus.OK);
     }
 
     @RequestMapping(value = "/{id}",  method = GET)
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<ModelDTO> create(@PathVariable("id") String id) {
+    public ResponseEntity<ModelDTO> get(@PathVariable("id") String id) {
 
         Model model = service.findById(id);
         if (model == null) {
@@ -59,28 +58,41 @@ public class ModelController {
 
         float prediction = service.predict(model, input.getInput());
 
-        return new ResponseEntity<>(new PredictionOutputDTO(prediction), HttpStatus.OK);
+        return new ResponseEntity<>(new PredictionOutputDTO(prediction, "prediction succeeded"), HttpStatus.OK);
     }
 
     @RequestMapping(value = "/{id}/events/{event_id}",  method = POST)
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<ModelDTO> event(@PathVariable("id") String id,
-                                                     @PathVariable("event_id") ModelEvent eventId,
-                                                     @RequestBody PredictionInputDTO input) {
+    public ResponseEntity<EventResponseDTO> event(@PathVariable("id") String id,
+                                                  @PathVariable("event_id") String eventId) {
         Model model = service.findById(id);
         if (model == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        service.handleEvent(model, eventId);
-        return new ResponseEntity<>(entityToDTO(model), HttpStatus.OK);
+        ModelEvent modelEvent;
+        try {
+            modelEvent = ModelEvent.valueOf(eventId.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(
+                    new EventResponseDTO(String.format("Event %s not supported", eventId), entityToDTO(model)),
+                    HttpStatus.BAD_REQUEST);
+        }
+        service.handleEvent(model, modelEvent);
+        return new ResponseEntity<>(new EventResponseDTO("Event handled Ok", entityToDTO(model)), HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/{id}/measures",  method = POST)
+    @RequestMapping(value = "/{id}/measures/{user_id}",  method = POST)
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<PredictionOutputDTO> predict(@PathVariable("id") String id, @RequestBody MeasureRequest measureRequest) {
+    public ResponseEntity<PredictionOutputDTO> predict(@PathVariable("id") String id,
+                                                       @PathVariable("user_id") String userId,
+                                                       @RequestBody MeasureRequest measureRequest) {
         Preconditions.checkNotNull(measureRequest);
+        Model model = service.findById(id);
+        if (model == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
         try {
-            service.append(String.join("\n", measureRequest.getPacket()));
+            service.append(model, String.join("\n", measureRequest.getPacket()), userId);
         } catch (IOException e) {
             e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
