@@ -1,18 +1,18 @@
-package org.activityrecognition.client.measure;
+package org.activityrecognition.client.auth;
 
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class MeasureClientFactory {
-    private static MeasureClient client;
-    private static final String BASE_URL = "http://3.23.104.237:8080";
+public class AuthClientFactory {
+    private static AuthClient client;
+    private static final String BASE_URL = "http://so-unlam.net.ar/";
 
-    public static MeasureClient getClient() {
+    public static AuthClient getClient() {
         if (client == null) {
             client = new retrofit2.Retrofit.Builder()
                     .baseUrl(BASE_URL)
                     .addConverterFactory(GsonConverterFactory.create())
                     .build()
-                    .create(MeasureClient.class);
+                    .create(AuthClient.class);
         }
 
         return client;

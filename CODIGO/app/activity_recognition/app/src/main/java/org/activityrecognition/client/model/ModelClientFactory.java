@@ -1,18 +1,18 @@
-package org.activityrecognition.client.user;
+package org.activityrecognition.client.model;
 
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class UserClientFactory {
-    private static UserClient client;
-    private static final String BASE_URL = "http://so-unlam.net.ar/";
+public class ModelClientFactory {
+    private static ModelClient client;
+    private static final String BASE_URL = "http://192.168.0.8:8080";
 
-    public static UserClient getClient() {
+    public static ModelClient getClient() {
         if (client == null) {
             client = new retrofit2.Retrofit.Builder()
                     .baseUrl(BASE_URL)
                     .addConverterFactory(GsonConverterFactory.create())
                     .build()
-                    .create(UserClient.class);
+                    .create(ModelClient.class);
         }
 
         return client;

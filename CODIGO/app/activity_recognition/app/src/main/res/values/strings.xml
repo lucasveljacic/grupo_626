@@ -21,4 +21,6 @@
     <string name="send">Enviar</string>
     <string name="title_activity_signup">Registro de Usuario</string>
     <string name="title_activity_menu">Menu</string>
+    <string name="title_activity_collect">Recolección de métricas</string>
+    <string name="title_activity_predict">Inferencia</string>
 </resources>

@@ -86,4 +86,8 @@ public class SensorPacketCollector implements SensorEventListener {
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
     }
+
+    void stop() {
+        sensorManager.unregisterListener(this);
+    }
 }

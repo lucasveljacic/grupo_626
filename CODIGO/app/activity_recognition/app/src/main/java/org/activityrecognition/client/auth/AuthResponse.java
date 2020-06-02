@@ -1,11 +1,11 @@
-package org.activityrecognition.client.user;
+package org.activityrecognition.client.auth;
 
 import java.io.Serializable;
 
-public class UserResponse implements Serializable {
+public class AuthResponse implements Serializable {
     private String env;
     private String state;
-    private UserDTO userDTO;
+    private SignUpDTO userDTO;
     private String msg;
     private String token;
 
@@ -25,11 +25,11 @@ public class UserResponse implements Serializable {
         this.state = state;
     }
 
-    public UserDTO getUserDTO() {
+    public SignUpDTO getUserDTO() {
         return userDTO;
     }
 
-    public void setUserDTO(UserDTO userDTO) {
+    public void setUserDTO(SignUpDTO userDTO) {
         this.userDTO = userDTO;
     }
 

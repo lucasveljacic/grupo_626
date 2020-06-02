@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".PredictActivity">
+
 
     <LinearLayout
         android:orientation="vertical"
@@ -14,50 +15,6 @@
         android:paddingLeft="24dp"
         android:paddingRight="24dp">
 
-        <Button
-            android:id="@+id/btn_collect_user_1"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="USER 1"
-            android:layout_marginTop="24dp"
-            android:layout_marginBottom="24dp"
-            android:padding="12dp"
-            />
-
-        <Button
-            android:id="@+id/btn_collect_user_2"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="USER 2"
-            android:layout_marginTop="24dp"
-            android:layout_marginBottom="24dp"
-            android:padding="12dp"
-            />
-
-
-        <Button
-            android:id="@+id/btn_train"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="TRAIN"
-            android:layout_marginTop="24dp"
-            android:layout_marginBottom="24dp"
-            android:padding="12dp"
-            />
-
-        <Button
-            android:id="@+id/btn_predict"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="PREDICT"
-            android:layout_marginTop="24dp"
-            android:layout_marginBottom="24dp"
-            android:padding="12dp"
-            />
-
-    </LinearLayout>
-
-    <!--
     <TextView
         android:id="@+id/textView"
         android:layout_width="247dp"
@@ -84,6 +41,16 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView"
         app:layout_constraintVertical_bias="1.0" />
-        -->
+        <Button
+            android:id="@+id/btn_close"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="FINALIZAR"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="24dp"
+            android:padding="12dp"
+            />
+
+    </LinearLayout>
 
 </ScrollView>

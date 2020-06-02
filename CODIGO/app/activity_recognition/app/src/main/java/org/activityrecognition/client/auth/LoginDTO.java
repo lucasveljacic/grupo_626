@@ -1,4 +1,4 @@
-package org.activityrecognition.client.user;
+package org.activityrecognition.client.auth;
 
 import java.io.Serializable;
 

@@ -13,10 +13,10 @@ import com.google.android.material.textfield.TextInputLayout;
 
 import org.activityrecognition.MainActivity;
 import org.activityrecognition.R;
-import org.activityrecognition.client.user.UserClient;
-import org.activityrecognition.client.user.UserClientFactory;
-import org.activityrecognition.client.user.UserDTO;
-import org.activityrecognition.client.user.UserResponse;
+import org.activityrecognition.client.auth.AuthClient;
+import org.activityrecognition.client.auth.AuthClientFactory;
+import org.activityrecognition.client.auth.SignUpDTO;
+import org.activityrecognition.client.auth.AuthResponse;
 
 import java.util.Objects;
 
@@ -27,7 +27,7 @@ import retrofit2.Response;
 public class SignUpActivity extends AppCompatActivity {
     private static final String TAG = "ACTREC_SIGNUP";
 
-    private UserClient client;
+    private AuthClient client;
 
     private TextInputLayout inputName;
     private TextInputLayout inputLastName;
@@ -53,7 +53,7 @@ public class SignUpActivity extends AppCompatActivity {
 
         signUpButton.setOnClickListener(v -> signUp());
 
-        client = UserClientFactory.getClient();
+        client = AuthClientFactory.getClient();
         session = new SessionManager(getApplicationContext());
     }
 
@@ -79,14 +79,14 @@ public class SignUpActivity extends AppCompatActivity {
         String password = Objects.requireNonNull(this.inputPassword.getEditText()).getText().toString();
 
         // launch a thread with the http call to the external service
-        UserDTO userDTO = new UserDTO("DEV", name, lastName, dni, email, password);
-        Call<UserResponse> call = client.signUp(userDTO);
+        SignUpDTO userDTO = new SignUpDTO("DEV", name, lastName, dni, email, password);
+        Call<AuthResponse> call = client.signUp(userDTO);
 
         Log.i(TAG, String.format("SignUp request: %s", userDTO.toString()));
 
-        call.enqueue(new Callback<UserResponse>() {
+        call.enqueue(new Callback<AuthResponse>() {
             @Override
-            public void onResponse(Call<UserResponse> call, Response<UserResponse> response) {
+            public void onResponse(Call<AuthResponse> call, Response<AuthResponse> response) {
                 progressDialog.dismiss();
                 if (response.isSuccessful()) {
                     Log.i(TAG, String.format("User signedUp successfully! %s", response.body().toString()));
@@ -106,7 +106,7 @@ public class SignUpActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<UserResponse> call, Throwable t) {
+            public void onFailure(Call<AuthResponse> call, Throwable t) {
                 progressDialog.dismiss();
                 Log.e(TAG, "Unable to signedUp User."+ t.getMessage());
                 t.printStackTrace();

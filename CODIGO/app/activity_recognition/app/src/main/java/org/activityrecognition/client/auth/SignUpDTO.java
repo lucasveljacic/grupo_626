@@ -1,8 +1,8 @@
-package org.activityrecognition.client.user;
+package org.activityrecognition.client.auth;
 
 import java.io.Serializable;
 
-public class UserDTO implements Serializable {
+public class SignUpDTO implements Serializable {
     private String env;
     private String name;
     private String lastname;
@@ -12,7 +12,7 @@ public class UserDTO implements Serializable {
     private final Integer commission = 2900;
     private final Integer group = 626;
 
-    public UserDTO(String env, String name, String lastname, Integer dni, String email, String password) {
+    public SignUpDTO(String env, String name, String lastname, Integer dni, String email, String password) {
         this.env = env;
         this.name = name;
         this.lastname = lastname;
@@ -21,7 +21,7 @@ public class UserDTO implements Serializable {
         this.password = password;
     }
 
-    public UserDTO(String env, String email, String password) {
+    public SignUpDTO(String env, String email, String password) {
         this.env = env;
         this.email = email;
         this.password = password;

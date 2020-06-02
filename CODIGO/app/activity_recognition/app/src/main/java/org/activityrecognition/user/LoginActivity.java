@@ -14,10 +14,10 @@ import com.google.android.material.textfield.TextInputLayout;
 
 import org.activityrecognition.MainActivity;
 import org.activityrecognition.R;
-import org.activityrecognition.client.user.LoginDTO;
-import org.activityrecognition.client.user.UserClient;
-import org.activityrecognition.client.user.UserClientFactory;
-import org.activityrecognition.client.user.UserResponse;
+import org.activityrecognition.client.auth.LoginDTO;
+import org.activityrecognition.client.auth.AuthClient;
+import org.activityrecognition.client.auth.AuthClientFactory;
+import org.activityrecognition.client.auth.AuthResponse;
 
 import java.util.Objects;
 
@@ -29,7 +29,7 @@ public class LoginActivity extends AppCompatActivity {
     private static final String TAG = "ACTREC_LOGIN";
     private static final int REQUEST_SIGNUP = 0;
 
-    private UserClient userClient;
+    private AuthClient userClient;
 
     private TextInputLayout inputEmail;
     private TextInputLayout inputPassword;
@@ -42,7 +42,7 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        userClient = UserClientFactory.getClient();
+        userClient = AuthClientFactory.getClient();
         session = new SessionManager(getApplicationContext());
 
         inputEmail = findViewById(R.id.input_email);
@@ -51,7 +51,6 @@ public class LoginActivity extends AppCompatActivity {
         signUpLink = findViewById(R.id.link_signup);
 
         signUpLink.setOnClickListener(v -> {
-            // Start the Sign Up activity
             Intent intent = new Intent(getApplicationContext(), SignUpActivity.class);
             startActivity(intent);
         });
@@ -78,13 +77,13 @@ public class LoginActivity extends AppCompatActivity {
 
         // launch a thread with the http call to the external service
         LoginDTO loginDTO = new LoginDTO("DEV", email, password);
-        Call<UserResponse> call = userClient.login(loginDTO);
+        Call<AuthResponse> call = userClient.login(loginDTO);
 
         Log.i(TAG, String.format("Login request: %s", loginDTO.toString()));
 
-        call.enqueue(new Callback<UserResponse>() {
+        call.enqueue(new Callback<AuthResponse>() {
             @Override
-            public void onResponse(Call<UserResponse> call, Response<UserResponse> response) {
+            public void onResponse(Call<AuthResponse> call, Response<AuthResponse> response) {
                 progressDialog.dismiss();
                 if (response.isSuccessful()) {
                     Log.i(TAG, String.format("User logged in successfully! %s", response.body().toString()));
@@ -104,7 +103,7 @@ public class LoginActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<UserResponse> call, Throwable t) {
+            public void onFailure(Call<AuthResponse> call, Throwable t) {
                 progressDialog.dismiss();
                 Log.e(TAG, "Unable to Login User."+ t.getMessage());
                 t.printStackTrace();
