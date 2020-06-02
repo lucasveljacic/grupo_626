@@ -6,6 +6,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.graphics.ColorSpace;
+
+import org.activityrecognition.client.model.ModelState;
 
 public class SessionManager {
     private SharedPreferences pref;
@@ -17,6 +20,7 @@ public class SessionManager {
     public static final String KEY_TOKEN = "name";
     public static final String KEY_EMAIL = "email";
     public static final String KEY_MODEL_NAME = "modelName";
+    public static final String KEY_MODEL_STATE = "modelState";
 
     public SessionManager(Context context){
         this.context = context;
@@ -50,6 +54,19 @@ public class SessionManager {
 
     public String getModelName() {
         return pref.getString(KEY_MODEL_NAME, "undefined");
+    }
+
+    public ModelState getModelState() {
+        String state = pref.getString(KEY_MODEL_STATE, null);
+        if (state == null) {
+            return null;
+        }
+        return ModelState.valueOf(state);
+    }
+
+    public void setModelState(ModelState state) {
+        editor.putString(KEY_MODEL_STATE, state.name());
+        editor.commit();
     }
 
     public void logoutUser() {

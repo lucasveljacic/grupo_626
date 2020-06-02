@@ -1,5 +1,6 @@
 package org.activityrecognition;
 
+import android.graphics.ColorSpace;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -11,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import org.activityrecognition.client.model.MeasureRequest;
 import org.activityrecognition.client.model.ModelClient;
 import org.activityrecognition.client.model.ModelClientFactory;
+import org.activityrecognition.client.model.ModelState;
 import org.activityrecognition.measure.PacketListenerTrain;
 import org.activityrecognition.measure.SensorCollectorForTrain;
 import org.activityrecognition.user.SessionManager;
@@ -45,26 +47,37 @@ public class CollectActivity extends AppCompatActivity implements PacketListener
         sensorPacketCollector.registerListener(this);
         sensorPacketCollector.start();
 
-        modelClient = ModelClientFactory.getClient();
-
         // run for certain indicated time
         final Handler handler = new Handler(Looper.getMainLooper());
         handler.postDelayed(() -> {
             sensorPacketCollector.stop();
+            if (userId.equals("1")) {
+                session.setModelState(ModelState.COLLECTED_1);
+            } else {
+                session.setModelState(ModelState.COLLECTED_2);
+            }
             finish();
         }, collectionTime * 1000);
+    }
+
+    ModelClient getModelClient() {
+        if (modelClient == null) {
+            modelClient = ModelClientFactory.getClient();
+        }
+        return modelClient;
     }
 
     @Override
     public void onPackageComplete(List<String> packet) {
         // launch a thread with the http call to the external service
         MeasureRequest request = new MeasureRequest(packet);
-        Call<Void> call = modelClient.pushMeasures(session.getModelName(), userId, request);
+        Call<Void> call = getModelClient().pushMeasures(session.getModelName(), userId, request);
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if (response.isSuccessful()) {
                     Log.i(TAG, "packet pushed successfully!");
+
                 } else {
                     Log.e(TAG, response.message());
                 }
