@@ -10,16 +10,16 @@ import android.widget.Button;
 import androidx.appcompat.app.AppCompatActivity;
 
 import org.activityrecognition.client.model.EventResponseDTO;
-import org.activityrecognition.client.model.MeasureRequest;
 import org.activityrecognition.client.model.ModelClient;
 import org.activityrecognition.client.model.ModelClientFactory;
 import org.activityrecognition.client.model.ModelDTO;
 import org.activityrecognition.client.model.ModelEvent;
 import org.activityrecognition.client.model.ModelState;
+import org.activityrecognition.event.EventTrackerService;
+import org.activityrecognition.event.EventType;
 import org.activityrecognition.user.SessionManager;
 
 import java.io.IOException;
-import java.util.concurrent.TimeoutException;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -36,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
     private Button resetButton;
     private Button logoutButton;
     private ModelClient modelClient;
+    private EventTrackerService eventTrackerService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,17 +65,21 @@ public class MainActivity extends AppCompatActivity {
         }
 
         updateView();
+
+        eventTrackerService = new EventTrackerService(session);
     }
 
     private void createModel() {
+        String modelName = session.getModelName();
         // launch a thread with the http call to the external service
-        Call<ModelDTO> call = getModelClient().create(session.getModelName());
+        Call<ModelDTO> call = getModelClient().create(modelName);
         call.enqueue(new Callback<ModelDTO>() {
             @Override
             public void onResponse(Call<ModelDTO> call, Response<ModelDTO> response) {
                 if (response.isSuccessful()) {
                     Log.i(TAG, "Model created successfully!");
                     session.setModelState(ModelState.NEW);
+                    eventTrackerService.pushEvent(EventType.MODEL_CREATED, String.format("Modelo %s creado exitosamente", modelName));
                     updateView();
                 } else {
                     Log.e(TAG, response.message());
@@ -213,6 +218,8 @@ public class MainActivity extends AppCompatActivity {
                         Thread.sleep(5 * 1000);
                         totalSleepSeconds += 5;
                     } while (state != ModelState.SERVING && totalSleepSeconds < 300);
+
+                    eventTrackerService.pushEvent(EventType.MODEL_TRAINED, String.format("Modelo %s entrenado exitosamente", modelName));
 
                     session.setModelState(ModelState.SERVING);
                 } else {

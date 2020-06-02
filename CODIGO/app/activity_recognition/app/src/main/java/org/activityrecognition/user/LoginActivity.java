@@ -14,10 +14,12 @@ import com.google.android.material.textfield.TextInputLayout;
 
 import org.activityrecognition.MainActivity;
 import org.activityrecognition.R;
-import org.activityrecognition.client.auth.LoginDTO;
 import org.activityrecognition.client.auth.AuthClient;
 import org.activityrecognition.client.auth.AuthClientFactory;
 import org.activityrecognition.client.auth.AuthResponse;
+import org.activityrecognition.client.auth.LoginDTO;
+import org.activityrecognition.event.EventTrackerService;
+import org.activityrecognition.event.EventType;
 
 import java.util.Objects;
 
@@ -27,8 +29,7 @@ import retrofit2.Response;
 
 public class LoginActivity extends AppCompatActivity {
     private static final String TAG = "ACTREC_LOGIN";
-    private static final int REQUEST_SIGNUP = 0;
-
+    private EventTrackerService eventTrackerService;
     private AuthClient userClient;
 
     private TextInputLayout inputEmail;
@@ -55,6 +56,8 @@ public class LoginActivity extends AppCompatActivity {
             startActivity(intent);
         });
         loginButton.setOnClickListener(v -> login());
+
+        eventTrackerService = new EventTrackerService(session);
     }
 
     public void login() {
@@ -95,7 +98,7 @@ public class LoginActivity extends AppCompatActivity {
 
                     session.createLoginSession(response.body().getToken(), email, model);
 
-                    onLoginSuccess();
+                    onLoginSuccess(email);
                 } else {
                     Log.i(TAG, String.format("User logged in failure! %s", response.raw().toString()));
                     onLoginFailed(response.raw().toString());
@@ -117,9 +120,10 @@ public class LoginActivity extends AppCompatActivity {
         moveTaskToBack(true);
     }
 
-    public void onLoginSuccess() {
+    public void onLoginSuccess(String email) {
         Intent i = new Intent(getApplicationContext(), MainActivity.class);
         startActivity(i);
+        eventTrackerService.pushEvent(EventType.LOGIN, String.format("User %s logged In successfully", email));
         finish();
     }
 

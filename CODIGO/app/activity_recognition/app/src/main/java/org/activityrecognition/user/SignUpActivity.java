@@ -17,6 +17,8 @@ import org.activityrecognition.client.auth.AuthClient;
 import org.activityrecognition.client.auth.AuthClientFactory;
 import org.activityrecognition.client.auth.SignUpDTO;
 import org.activityrecognition.client.auth.AuthResponse;
+import org.activityrecognition.event.EventTrackerService;
+import org.activityrecognition.event.EventType;
 
 import java.util.Objects;
 
@@ -37,6 +39,7 @@ public class SignUpActivity extends AppCompatActivity {
     private TextInputLayout inputPasswordRepeat;
     private Button signUpButton;
     private SessionManager session;
+    private EventTrackerService eventTrackerService;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -55,6 +58,8 @@ public class SignUpActivity extends AppCompatActivity {
 
         client = AuthClientFactory.getClient();
         session = new SessionManager(getApplicationContext());
+
+        eventTrackerService = new EventTrackerService(session);
     }
 
     public void signUp() {
@@ -98,7 +103,7 @@ public class SignUpActivity extends AppCompatActivity {
 
                     session.createLoginSession(response.body().getToken(), email, model);
 
-                    onSignUpSuccess();
+                    onSignUpSuccess(email);
                 } else {
                     Log.i(TAG, String.format("User signedUp failure! %s", response.raw().toString()));
                     onSignUpFailed(response.raw().toString());
@@ -120,9 +125,10 @@ public class SignUpActivity extends AppCompatActivity {
         moveTaskToBack(true);
     }
 
-    public void onSignUpSuccess() {
+    public void onSignUpSuccess(String email) {
         Intent i = new Intent(getApplicationContext(), MainActivity.class);
         startActivity(i);
+        eventTrackerService.pushEvent(EventType.REGISTER, String.format("Usuario %s registrado exitosamente", email));
         finish();
     }
 
