@@ -1,17 +1,19 @@
 package org.activityrecognition.mlmodel.model;
 
-import org.activityrecognition.client.TFPredictionRequestDTO;
-import org.activityrecognition.client.TFPredictionResponseDTO;
-import org.activityrecognition.client.TensorFlowServiceClient;
-import org.activityrecognition.client.TensorFlowServiceClientFactory;
+import com.sun.org.apache.bcel.internal.generic.BREAKPOINT;
+import org.activityrecognition.client.*;
 import org.activityrecognition.mlmodel.data.ModelRepository;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -27,6 +29,11 @@ public class ModelService {
         this.repository = repository;
     }
     public Model create(Model model) {
+        // checking if model is in serving state already
+        if (isBeenServed(model)) {
+            model.setState(ModelState.SERVING);
+        }
+
         return repository.save(model);
     }
 
@@ -36,8 +43,7 @@ public class ModelService {
 
     public float predict(Model model, float[][][] input) {
 
-        TFPredictionRequestDTO request = new TFPredictionRequestDTO();
-
+        TFPredictionRequestDTO request = new TFPredictionRequestDTO(input);
 
         TFPredictionResponseDTO response = tensorflowServiceClient.predict(model.getName(), request);
         float[][] prediction = response.getPredictions();
@@ -47,8 +53,17 @@ public class ModelService {
 
     public void handleEvent(Model model, ModelEvent eventId) {
         switch (eventId) {
-            case FINISH_COLLECTING:
+            case END_COLLECT_1:
+                model.setState(ModelState.COLLECTED_1);
+                repository.save(model);
+                break;
+            case END_COLLECT_2:
+                model.setState(ModelState.COLLECTED_2);
+                repository.save(model);
+                break;
+            case START_TRAINING:
                 trainModel(model);
+                break;
         }
     }
 
@@ -56,8 +71,7 @@ public class ModelService {
         model.setState(ModelState.TRAINING);
         repository.save(model);
 
-        //new Thread(() -> {
-
+        new Thread(() -> {
             ProcessBuilder pb = new ProcessBuilder(
                     "bash",
                     "run.sh",
@@ -70,50 +84,113 @@ public class ModelService {
             try {
                 Process p = pb.start();
                 p.waitFor(5, TimeUnit.MINUTES);
-
-                // todo: check file SUCCESS had been written
                 serveModel(model);
-            } catch (IOException | InterruptedException e) {
+
+            } catch (IOException | InterruptedException | TimeoutException e) {
                 e.printStackTrace();
             }
-        //}).start();
+        }).start();
     }
 
-    private void serveModel(Model model) throws IOException {
-        model.setState(ModelState.SERVING);
+    private void serveModel(Model model) throws IOException, TimeoutException, InterruptedException {
+        // notifying TensorFlow server the new model
+        model.setState(ModelState.READY_TO_SERVE);
         repository.save(model);
 
-        // notifying TensorFlow server the new model
         publishModels();
+
+        int totalSleepSeconds = 0;
+        while (!isBeenServed(model)) {
+            if (totalSleepSeconds >= 60) {
+                throw new TimeoutException("Task execution timed out!");
+            }
+            Thread.sleep(5 * 1000);
+            totalSleepSeconds += 5;
+        }
+
+        model.setState(ModelState.SERVING);
+        repository.save(model);
     }
 
     private void publishModels() throws IOException {
         List<Model> models = repository.findAll();
 
         String modelsConfig = models.stream()
-                .filter(model -> model.getState() == ModelState.SERVING)
+                .filter(model -> model.getState() == ModelState.SERVING || model.getState() == ModelState.READY_TO_SERVE)
                 .map(model -> {
                     return "  config {\n" +
                             "    name: \""+model.getName()+"\",\n" +
-                            "    base_path: \""+String.format("%s/%s", MODELS_PATH, model.getName())+"\",\n" +
+                            "    base_path: \""+String.format("%s/%s/model", MODELS_PATH, model.getName())+"\",\n" +
                             "    model_platform: \"tensorflow\",\n" +
                             "  }\n";
                 }).collect(Collectors.joining());
 
-        String content = "model_config_list {\n" + modelsConfig + "}\n";
+        if (!modelsConfig.isEmpty()) {
+            modelsConfig = "model_config_list {\n" + modelsConfig + "}\n";
+        }
 
         File file = new File(String.format("%s/%s", MODELS_PATH, "models.config"));
         FileWriter fr = new FileWriter(file, false);
-        fr.write(content.trim());
+        fr.write(modelsConfig.trim());
         fr.close();
     }
 
     public void append(Model model, String packet, String suffix) throws IOException {
         logger.info(packet);
+        boolean append = true;
 
-        File file = new File(String.format("%s/%s/measures_%s.csv", MODELS_PATH, model.getName(), suffix));
-        FileWriter fr = new FileWriter(file, true);
+        if (model.getState() == ModelState.NEW && suffix.equals("1")) {
+            model.setState(ModelState.COLLECTING_1);
+            append = false;
+        }
+        if (model.getState() == ModelState.COLLECTED_1 && suffix.equals("2")) {
+            model.setState(ModelState.COLLECTING_2);
+            append = false;
+        }
+
+        File file = getMeasuresFile(model, suffix);
+        FileWriter fr = new FileWriter(file, append);
         fr.write(packet.trim()+"\n");
         fr.close();
+    }
+
+    public List<Model> findAll() {
+        return repository.findAll();
+    }
+
+    public void delete(Model model) throws IOException {
+        deleteDirectory(new File(String.format("%s/%s", MODELS_PATH, model.getName())).toPath());
+        model.setState(ModelState.NEW);
+
+        repository.save(model);
+        publishModels();
+    }
+
+    private File getMeasuresFile(Model model, String suffix) {
+        return new File(String.format("%s/%s/train/measures_%s.csv", MODELS_PATH, model.getName(), suffix));
+    }
+
+    private void deleteDirectory(Path path) {
+        try {
+            Files.walk(path)
+                    .sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .forEach(File::delete);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private boolean isBeenServed(Model model) {
+        TFModelDTO tfModelDTO;
+        try {
+            tfModelDTO = tensorflowServiceClient.findModel(model.getName());
+            if (tfModelDTO.getModelVersionStatus() != null && !tfModelDTO.getModelVersionStatus().isEmpty()) {
+                if (tfModelDTO.getModelVersionStatus().get(0).getState().equals("AVAILABLE")) {
+                    return true;
+                }
+            }
+        } catch (Exception ignored) {}
+        return false;
     }
 }

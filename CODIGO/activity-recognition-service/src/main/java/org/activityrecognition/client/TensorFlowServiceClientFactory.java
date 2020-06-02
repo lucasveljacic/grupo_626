@@ -12,8 +12,9 @@ public class TensorFlowServiceClientFactory {
                 .client(new ApacheHttpClient())
                 .encoder(new JacksonEncoder())
                 .decoder(new JacksonDecoder())
+                .errorDecoder(new TFErrorDecoder())
                 .requestInterceptor(new OutboundRequestInterceptor());
 
-        return builder.target(TensorFlowServiceClient.class, "http://18.221.185.88:9000");
+        return builder.target(TensorFlowServiceClient.class, "http://localhost:9000");
     }
 }

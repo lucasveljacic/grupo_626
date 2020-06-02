@@ -11,12 +11,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import static org.springframework.web.bind.annotation.RequestMethod.*;
 
 @RestController
 @RequestMapping("/models")
 public class ModelController {
+    private final Logger logger = Logger.getLogger(ModelController.class.getName());
+
     private final ModelService service;
 
     public ModelController(ModelService service) {
@@ -31,7 +37,7 @@ public class ModelController {
         model.setName(id);
         model.setState(ModelState.NEW);
 
-        service.create(model);
+        model = service.create(model);
         return new ResponseEntity<>(entityToDTO(model), HttpStatus.OK);
     }
 
@@ -47,14 +53,22 @@ public class ModelController {
         return new ResponseEntity<ModelDTO>(entityToDTO(model), HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/{id}/predict",  method = POST)
+    @RequestMapping(method = GET)
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<List<ModelDTO>> getAll() {
+        List<Model> models = service.findAll();
+        return new ResponseEntity<>(entitiesToDTO(models), HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/{id}/predictions",  method = POST)
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<PredictionOutputDTO> predict(@PathVariable("id") String id, @RequestBody PredictionInputDTO input) {
-
         Model model = service.findById(id);
         if (model == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+
+        logger.info(Arrays.deepToString(input.getInput()));
 
         float prediction = service.predict(model, input.getInput());
 
@@ -83,9 +97,9 @@ public class ModelController {
 
     @RequestMapping(value = "/{id}/measures/{user_id}",  method = POST)
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<PredictionOutputDTO> predict(@PathVariable("id") String id,
-                                                       @PathVariable("user_id") String userId,
-                                                       @RequestBody MeasureRequest measureRequest) {
+    public ResponseEntity<Void> collect(@PathVariable("id") String id,
+                                        @PathVariable("user_id") String userId,
+                                        @RequestBody MeasureRequest measureRequest) {
         Preconditions.checkNotNull(measureRequest);
         Model model = service.findById(id);
         if (model == null) {
@@ -98,6 +112,20 @@ public class ModelController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/{id}",  method = DELETE)
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<Void> delete(@PathVariable("id") String id) throws IOException {
+        Model model = service.findById(id);
+        if (model != null) {
+            service.delete(model);
+        }
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    private List<ModelDTO> entitiesToDTO(List<Model> models) {
+        return models.stream().map(this::entityToDTO).collect(Collectors.toList());
     }
 
     private ModelDTO entityToDTO(Model model) {

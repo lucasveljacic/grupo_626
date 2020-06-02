@@ -49,6 +49,6 @@
      sudo apt install tensorflow-model-server
      
      
-    tensorflow_model_server --rest_api_port=9000 --model_config_file=/var/models/tensorflow-server-examples/models.config --model_config_file_poll_wait_seconds=30
+    tensorflow_model_server --rest_api_port=9000 --model_config_file=/var/models/models.config --model_config_file_poll_wait_seconds=30
 
 ## Deploy
