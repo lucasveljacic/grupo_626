@@ -78,7 +78,7 @@ public class ModelController {
     @RequestMapping(value = "/{id}/events/{event_id}",  method = POST)
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<EventResponseDTO> event(@PathVariable("id") String id,
-                                                  @PathVariable("event_id") String eventId) {
+                                                  @PathVariable("event_id") String eventId) throws IOException {
         Model model = service.findById(id);
         if (model == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

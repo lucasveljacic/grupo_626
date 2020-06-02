@@ -1,6 +1,5 @@
 package org.activityrecognition.mlmodel.model;
 
-import com.sun.org.apache.bcel.internal.generic.BREAKPOINT;
 import org.activityrecognition.client.*;
 import org.activityrecognition.mlmodel.data.ModelRepository;
 import org.springframework.stereotype.Service;
@@ -34,6 +33,17 @@ public class ModelService {
             model.setState(ModelState.SERVING);
         }
 
+        // create directory structure
+        File trainingPath = new File(String.format("%s/%s/train", MODELS_PATH, model.getName()));
+        if (!trainingPath.exists()) {
+            trainingPath.mkdirs();
+        }
+
+        File servingPath = new File(String.format("%s/%s/model", MODELS_PATH, model.getName()));
+        if (!servingPath.exists()) {
+            servingPath.mkdirs();
+        }
+
         return repository.save(model);
     }
 
@@ -51,7 +61,7 @@ public class ModelService {
         return prediction[0][0];
     }
 
-    public void handleEvent(Model model, ModelEvent eventId) {
+    public void handleEvent(Model model, ModelEvent eventId) throws IOException {
         switch (eventId) {
             case END_COLLECT_1:
                 model.setState(ModelState.COLLECTED_1);
@@ -63,6 +73,10 @@ public class ModelService {
                 break;
             case START_TRAINING:
                 trainModel(model);
+                break;
+            case RESET:
+                delete(model);
+                create(model);
                 break;
         }
     }
