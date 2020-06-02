@@ -11,6 +11,10 @@ public class Measure {
         size++;
     }
 
+    public float[] getValues() {
+        return values;
+    }
+
     public String collectAsString() {
         values[0] /= size;
         values[1] /= size;

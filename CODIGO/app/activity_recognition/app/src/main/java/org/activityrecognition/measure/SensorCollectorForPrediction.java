@@ -9,18 +9,19 @@ import android.hardware.SensorManager;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SensorPacketCollector implements SensorEventListener {
-    private final int PACKET_SIZE = 20;
+public class SensorCollectorForPrediction implements SensorEventListener {
+    private final int PACKET_SIZE = 50;
     private final int SAMPLE_RATE_MILLIS = 20;
     private SensorManager sensorManager;
-    private PacketListener listener;
-    private List<String> packet;
+    private PacketListenerPredict listener;
+    private float[][][] packet;
+    int i = 0;
     private MeasureGroup measureGroup;
     private long lastReportTime;
 
-    SensorPacketCollector(SensorManager sensorManager) {
+    SensorCollectorForPrediction(SensorManager sensorManager) {
         this.sensorManager = sensorManager;
-        this.packet = new ArrayList<>();
+        this.packet = new float[1][50][12];
         this.measureGroup = new MeasureGroup();
 
         lastReportTime = System.currentTimeMillis();
@@ -60,25 +61,27 @@ public class SensorPacketCollector implements SensorEventListener {
             // check if we should close the measure after collecting and averaging
             long now = System.currentTimeMillis();
             if (measureGroup.ready() && now > lastReportTime + SAMPLE_RATE_MILLIS) {
-                packet.add(measureGroup.toString());
+                packet[0][i] = measureGroup.toInputPrediction();
                 lastReportTime = now;
+                i++;
             }
 
             // check if we should send the packet
-            if (packet.size() == PACKET_SIZE) {
+            if (i >= PACKET_SIZE) {
                 notifyListeners(packet);
-                packet = new ArrayList<>();
+                packet = new float[1][50][12];
+                i = 0;
             }
         }
     }
 
-    private void notifyListeners(List<String> packet) {
+    private void notifyListeners(float[][][] inputPrediction) {
         if (this.listener != null) {
-            this.listener.onPackageComplete(packet);
+            this.listener.onPackageComplete(inputPrediction);
         }
     }
 
-    void registerListener(PacketListener listener) {
+    void registerListener(PacketListenerPredict listener) {
         this.listener = listener;
     }
 

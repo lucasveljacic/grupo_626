@@ -2,6 +2,6 @@ package org.activityrecognition.measure;
 
 import java.util.List;
 
-public interface PacketListener {
+public interface PacketListenerTrain {
     void onPackageComplete(List<String> packet);
 }
