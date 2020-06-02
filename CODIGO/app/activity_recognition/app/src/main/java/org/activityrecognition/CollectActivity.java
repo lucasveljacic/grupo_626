@@ -51,6 +51,7 @@ public class CollectActivity extends AppCompatActivity implements PacketListener
         final Handler handler = new Handler(Looper.getMainLooper());
         handler.postDelayed(() -> {
             sensorPacketCollector.stop();
+            sensorPacketCollector.unregisterListener();
             if (userId.equals("1")) {
                 session.setModelState(ModelState.COLLECTED_1);
             } else {

@@ -1,11 +1,13 @@
 package org.activityrecognition;
 
+import android.gesture.Prediction;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.res.FontResourcesParserCompat;
 
 import org.activityrecognition.client.model.ModelClient;
 import org.activityrecognition.client.model.ModelClientFactory;
@@ -24,6 +26,7 @@ public class PredictActivity extends AppCompatActivity implements PacketListener
     private ModelClient modelClient;
     private SessionManager session;
     private Button closeButton;
+    private Button predictionButton;
     private SensorCollectorForPrediction sensorCollectorForPrediction;
 
     @Override
@@ -33,6 +36,8 @@ public class PredictActivity extends AppCompatActivity implements PacketListener
 
         session = new SessionManager(getApplicationContext());
         session.checkLogin();
+
+        predictionButton = findViewById(R.id.btn_prediction);
 
         closeButton = findViewById(R.id.btn_close);
         closeButton.setOnClickListener(v -> backMenu());
@@ -53,6 +58,7 @@ public class PredictActivity extends AppCompatActivity implements PacketListener
 
     private void backMenu() {
         sensorCollectorForPrediction.stop();
+        sensorCollectorForPrediction.unregisterListener();
         finish();
     }
 
@@ -66,8 +72,21 @@ public class PredictActivity extends AppCompatActivity implements PacketListener
             public void onResponse(Call<PredictionOutputDTO> call, Response<PredictionOutputDTO> response) {
                 if (response.isSuccessful()) {
                     assert response.body() != null;
+
+                    float prediction = response.body().getPrediction();
+                    String txtPrediction;
+                    int p;
+                    if (prediction < 0.5) {
+                        p = (int) (100*(1-prediction));
+                        txtPrediction = "USUARIO 1 - " + p + "%";
+                    } else {
+                        p = (int) (100*prediction);
+                        txtPrediction = "USUARIO 2 - " + p + "%";
+                    }
+
                     Log.i(TAG, String.format("Prediction: %f", response.body().getPrediction()));
 
+                    predictionButton.setText(txtPrediction);
                 } else {
                     Log.e(TAG, response.message());
                 }

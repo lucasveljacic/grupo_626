@@ -128,7 +128,8 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     public void onLoginFailed(String errMessage) {
-        Toast.makeText(getBaseContext(), errMessage, Toast.LENGTH_LONG).show();
+        Log.e(TAG, errMessage);
+        Toast.makeText(getBaseContext(), "Credenciales incorrectas!", Toast.LENGTH_LONG).show();
         loginButton.setEnabled(true);
     }
 

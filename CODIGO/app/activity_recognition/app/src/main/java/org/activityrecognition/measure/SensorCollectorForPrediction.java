@@ -6,6 +6,8 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 
+import org.activityrecognition.PredictActivity;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -92,5 +94,10 @@ public class SensorCollectorForPrediction implements SensorEventListener {
 
     public void stop() {
         sensorManager.unregisterListener(this);
+    }
+
+    public void unregisterListener() {
+        sensorManager.unregisterListener(this);
+        this.listener = null;
     }
 }

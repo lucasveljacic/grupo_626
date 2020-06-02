@@ -90,4 +90,9 @@ public class SensorCollectorForTrain implements SensorEventListener {
     public void stop() {
         sensorManager.unregisterListener(this);
     }
+
+    public void unregisterListener() {
+        sensorManager.unregisterListener(this);
+        this.listener = null;
+    }
 }

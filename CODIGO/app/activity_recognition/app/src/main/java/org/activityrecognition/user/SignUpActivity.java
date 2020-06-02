@@ -133,7 +133,8 @@ public class SignUpActivity extends AppCompatActivity {
     }
 
     public void onSignUpFailed(String errMessage) {
-        Toast.makeText(getBaseContext(), errMessage, Toast.LENGTH_LONG).show();
+        Log.e(TAG, errMessage);
+        Toast.makeText(getBaseContext(), "Error en en registro!", Toast.LENGTH_LONG).show();
         signUpButton.setEnabled(true);
     }
 

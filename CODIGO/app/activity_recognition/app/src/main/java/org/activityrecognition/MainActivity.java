@@ -144,7 +144,8 @@ public class MainActivity extends AppCompatActivity {
     private void collectUserMetrics(String id) {
         Intent intent = new Intent(getApplicationContext(), CollectActivity.class);
         intent.putExtra("USER_ID", id);
-        intent.putExtra("COLLECTION_TIME_SEC", 10);
+        intent.putExtra("COLLECTION_TIME_SEC", 60
+        );
         startActivity(intent);
     }
 
