@@ -26,6 +26,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
+    private static final int COLLECT_TIME_SEC = 10;
     private final String TAG = "ACTREC_MENU";
 
     private SessionManager session;
@@ -144,8 +145,7 @@ public class MainActivity extends AppCompatActivity {
     private void collectUserMetrics(String id) {
         Intent intent = new Intent(getApplicationContext(), CollectActivity.class);
         intent.putExtra("USER_ID", id);
-        intent.putExtra("COLLECTION_TIME_SEC", 60
-        );
+        intent.putExtra("COLLECTION_TIME_SEC", COLLECT_TIME_SEC);
         startActivity(intent);
     }
 
@@ -195,7 +195,6 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected String doInBackground(String... params) {
-            //publishProgress("starting...");
             String modelName = session.getModelName();
 
             // launch a thread with the http call to the external service

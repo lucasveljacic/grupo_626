@@ -1,12 +1,15 @@
 package org.activityrecognition;
 
+import android.content.DialogInterface;
 import android.graphics.ColorSpace;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import org.activityrecognition.client.model.MeasureRequest;
@@ -29,6 +32,7 @@ public class CollectActivity extends AppCompatActivity implements PacketListener
     private SessionManager session;
     private ModelClient modelClient;
     private String userId;
+    private SensorCollectorForTrain sensorPacketCollector;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -42,10 +46,7 @@ public class CollectActivity extends AppCompatActivity implements PacketListener
         session.checkLogin();
 
         SensorManager sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-
-        SensorCollectorForTrain sensorPacketCollector = new SensorCollectorForTrain(sensorManager);
-        sensorPacketCollector.registerListener(this);
-        sensorPacketCollector.start();
+        sensorPacketCollector = new SensorCollectorForTrain(sensorManager);
 
         // run for certain indicated time
         final Handler handler = new Handler(Looper.getMainLooper());
@@ -57,7 +58,14 @@ public class CollectActivity extends AppCompatActivity implements PacketListener
             } else {
                 session.setModelState(ModelState.COLLECTED_2);
             }
-            finish();
+            AlertDialog alertDialog = new AlertDialog.Builder(CollectActivity.this).create();
+            alertDialog.setMessage("Recolección de datos finalizada");
+            alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "ACEPTAR",
+                    (dialog, which) -> {
+                        dialog.dismiss();
+                        CollectActivity.this.finish();
+                    });
+            alertDialog.show();
         }, collectionTime * 1000);
     }
 
@@ -90,5 +98,20 @@ public class CollectActivity extends AppCompatActivity implements PacketListener
                 t.printStackTrace();
             }
         });
+    }
+
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        sensorPacketCollector.stop();
+        sensorPacketCollector.unregisterListener();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        sensorPacketCollector.start();
+        sensorPacketCollector.registerListener(this);
     }
 }

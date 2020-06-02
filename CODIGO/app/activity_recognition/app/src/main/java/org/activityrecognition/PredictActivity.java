@@ -100,9 +100,19 @@ public class PredictActivity extends AppCompatActivity implements PacketListener
         });
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        sensorCollectorForPrediction.stop();
+        sensorCollectorForPrediction.unregisterListener();
+    }
 
-
-
+    @Override
+    protected void onResume() {
+        super.onResume();
+        sensorCollectorForPrediction.start();
+        sensorCollectorForPrediction.registerListener(this);
+    }
 
 
 }
