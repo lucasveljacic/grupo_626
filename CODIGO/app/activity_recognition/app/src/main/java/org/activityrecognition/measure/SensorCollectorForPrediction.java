@@ -19,7 +19,7 @@ public class SensorCollectorForPrediction implements SensorEventListener {
     private MeasureGroup measureGroup;
     private long lastReportTime;
 
-    SensorCollectorForPrediction(SensorManager sensorManager) {
+    public SensorCollectorForPrediction(SensorManager sensorManager) {
         this.sensorManager = sensorManager;
         this.packet = new float[1][50][12];
         this.measureGroup = new MeasureGroup();
@@ -27,7 +27,7 @@ public class SensorCollectorForPrediction implements SensorEventListener {
         lastReportTime = System.currentTimeMillis();
     }
 
-    void start() {
+    public void start() {
         sensorManager.registerListener(this,
                 sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
                 SensorManager.SENSOR_DELAY_NORMAL);
@@ -81,7 +81,7 @@ public class SensorCollectorForPrediction implements SensorEventListener {
         }
     }
 
-    void registerListener(PacketListenerPredict listener) {
+    public void registerListener(PacketListenerPredict listener) {
         this.listener = listener;
     }
 
@@ -90,7 +90,7 @@ public class SensorCollectorForPrediction implements SensorEventListener {
 
     }
 
-    void stop() {
+    public void stop() {
         sensorManager.unregisterListener(this);
     }
 }

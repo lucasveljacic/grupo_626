@@ -32,8 +32,6 @@
         <activity android:name="org.activityrecognition.user.SignUpActivity"
             android:label="@string/title_activity_signup" />
 
-        <service android:name="org.activityrecognition.measure.MeasurePublisherService" />
-        <service android:name="org.activityrecognition.measure.PredictionService" />
     </application>
 
 </manifest>

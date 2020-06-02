@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -31,7 +30,7 @@ public class MeasureGroup {
 
     void addMeasure(Long timestamp, int sensorType, float[] values) {
         this.timestamp = timestamp;
-        measures.get(sensorType).setValues(values);
+        measures.get(sensorType).addValues(values);
         sensorsCollectedSet.add(sensorType);
     }
 
@@ -42,14 +41,6 @@ public class MeasureGroup {
         return ready;
     }
 
-    public Long getTimestamp() {
-        return timestamp;
-    }
-
-    public Map<Integer, Measure> getMeasures() {
-        return measures;
-    }
-
     public String toPacket() {
         return timestamp + "," + measures.entrySet().stream()
                 .map(entry -> entry.getKey()+","+entry.getValue().collectAsString())
@@ -57,10 +48,10 @@ public class MeasureGroup {
     }
 
     public float[] toInputPrediction() {
-        float[] v1 = measures.get(Sensor.TYPE_ACCELEROMETER).getValues().clone();
-        float[] v2 = measures.get(Sensor.TYPE_GYROSCOPE).getValues().clone();
-        float[] v3 = measures.get(Sensor.TYPE_GRAVITY).getValues().clone();
-        float[] v4 = measures.get(Sensor.TYPE_ROTATION_VECTOR).getValues().clone();
+        float[] v1 = measures.get(Sensor.TYPE_ACCELEROMETER).collect();
+        float[] v2 = measures.get(Sensor.TYPE_GYROSCOPE).collect();
+        float[] v3 = measures.get(Sensor.TYPE_GRAVITY).collect();
+        float[] v4 = measures.get(Sensor.TYPE_ROTATION_VECTOR).collect();
 
         return new float[]{v1[0], v1[1], v1[2], v2[0], v2[1], v2[2], v3[0], v3[1], v3[2], v4[0], v4[1], v4[2]};
     }
