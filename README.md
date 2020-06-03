@@ -39,12 +39,12 @@ Se encuentra desplegado en AWS.
 
 https://www.tensorflow.org/tfx/guide/serving
 
-### Modo de uso de la APP
+## Modo de uso de la APP
 
-#### Login / Registro
+### Login / Registro
 No mucho que aclarar, los pasos normales de una autenticación básica.
 
-#### Menu Principal
+### Menu Principal
 El menu principal muestra los siguientes botones:
 * *Logout*. Realiza el logout de la APP. 
 * *Resetear el Modelo*. Borra el modelo actual y lo crea nuevamente. 
@@ -63,15 +63,16 @@ Para esto, envía peticiones al Model Service que a su vez las delega en el Tens
 La captura de datos de los sensores se realiza de manera similar a la de la fase de captua, 
 enviando paquetes de 50x12 una vez cada segundo.
 
-![Login](DOC/login.jpeg)
-![Sign Up](DOC/signup.jpeg)
-![Menu](DOC/menu.jpeg)
-![Data collection](DOC/data-collection.jpeg)
-![Data collection](DOC/inference.jpeg)
+<img alt="Login" src="DOC/login.jpeg" width="200">
+<img alt="Sign Up" src="DOC/signup.jpeg" width="200">
+<img alt="Main Menu" src="DOC/menu.jpeg" width="200">
+<img alt="Data Collection" src="DOC/data-collection.jpeg" width="200">
+<img alt="Inference" src="DOC/inference.jpeg" width="200">
 
 
-### Características del Modelo usado
+## Características del Modelo usado
 ![LSTM Network](DOC/LSTM.png)
+
 El modelo usado es una red neuronal de tipo RNN (Recursive Neural Network). Concretamente una red 
 con una capa de LSTM (Long Short Term Memory) a la que se le entrena con inputs o tensores de (N, 50, 12),
 done N es la cantidad de entradas, tipicamente 120 ya que es una por segundo, con 60 segundos por usuario, son las 
@@ -81,7 +82,7 @@ El target que se le indica al modelo para el training para cada entrada es 0 o 1
 1 o 2 respectivamente. El modelo y las pruebas realizadas se puede ver [aquí](/CODIGO/models/modeling.ipynb). 
 
 
-### Conclusiones
+## Conclusiones
 * Los resultados obtenidos son aceptables. El modelo logró predecir con bastante certeza diferentes actividades y usuarios.
 * Algo destacable es que no es requerido que el Usuario 1 sea una persona y Usuario 2 una diferente. En realidad, el modelo intenta reconocer patrones de actividad de 
 los sensores, asi que puede usarse para realizar HAR (Human Activity Recognition). 
