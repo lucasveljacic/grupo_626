@@ -71,6 +71,7 @@ enviando paquetes de 50x12 una vez cada segundo.
 <td><img alt="Inference" src="DOC/inference.jpeg" width="200"></td>
 </tr></table>
 
+
 ## Características del Modelo usado
 ![LSTM Network](DOC/LSTM.png)
 
@@ -86,16 +87,17 @@ El target que se le indica al modelo para el training para cada entrada es 0 o 1
 ## Conclusiones
 * Los resultados obtenidos son aceptables. El modelo logró predecir con bastante certeza diferentes actividades y usuarios.
 * Algo destacable es que no es requerido que el Usuario 1 sea una persona y Usuario 2 una diferente. En realidad, el modelo intenta reconocer patrones de actividad de 
-los sensores, asi que puede usarse para realizar HAR (Human Activity Recognition). 
+los sensores, así que puede usarse para realizar HAR (Human Activity Recognition). 
 Por ejemplo, se puede caminar durante todo la captura de Usuario 1, y quedarse quieto o correr durante la del Usuario 2. 
-Luego en fase de inferencia, el modelo reconocerá (con cierto nivel de certeza) la actividad que esta haciendo el usuario en ese momento. 
-* La clasificacián en este caso es binaria. No obstante se podria extender a una clasificaciones de N clases como trabajo futuro.
-* Todo el trabajo de infrastructura, integración de los servicios y las app insumió mucho tiempo de modo que 
-se dedicó poco tiempo al tuning del modelo. Incluso no se pudo probar otros tipos de modelos de ML. Queda para trabajo futuro encarar esto.
-* Se intento sin exito servir el modelo local dentro de la app. Se intento implementar tensorflow lite
-lo cual hubiera sido un fit natural, pero actualmente no soporta LSTM networks. Lo tienen como roadmap para el 2020.
-* Se penso también en servir el modelo desde el Model Service. Se probo con deeplearning4j sin exito. Se encontro poca documentación. 
-Tensorflow serving resolvio el requerimiento con muy baja latencia ademas, ya que esta desarrollado en c++ usando directamente 
+Luego en fase de inferencia, el modelo reconocerá (con cierto nivel de certeza) la actividad que está realizando el usuario en ese momento. 
+* La clasificacián es binaria. No obstante se podría extender a una clasificacion multi clase como trabajo futuro.
+* Todo el trabajo de infrastructura, integración de los servicios y la app requirió mucho tiempo. De modo que 
+se dedicó poco tiempo al tuning del modelo. Incluso no se pudo probar otros tipos de modelos de ML que podrían dar resultados similares. 
+Queda para trabajo futuro encarar esto.
+* Se intentó sin éxito servir el modelo local dentro de la app implementando tensorflow lite
+lo cual hubiera sido un fit natural. Lamentablemente Tensorflow Lite no soporta actualmente LSTM models. Lo tienen como roadmap para el 2020.
+* Se pensó también en servir el modelo desde el Model Service directamente. Se probó con *deeplearning4j* sin éxito. Se encontro poca documentación. 
+Tensorflow serving resolvió el requerimiento con muy baja latencia además, ya que esta desarrollado en c++ usando directamente 
 la lib de tensorflow desarrollada en el mismo lenguaje. 
 
 
