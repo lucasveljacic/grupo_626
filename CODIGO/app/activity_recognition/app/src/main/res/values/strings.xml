@@ -26,8 +26,8 @@
     <string name="logout">LOGOUT</string>
     <string name="reset_model">RESETEAR EL MODELO</string>
     <string name="train_model">ENTRENAR EL MODELO</string>
-    <string name="collect_user_1">USUARIO 1</string>
-    <string name="collect_user_2">USUARIO 2</string>
+    <string name="collect_user_1">CAPTURA USUARIO 1</string>
+    <string name="collect_user_2">CAPTURA USUARIO 2</string>
     <string name="predict_user">PREDICCION DE USUARIO</string>
     <string name="text_collect"> Las tres leyes de la robótica. Un robot no debe dañar a un ser humano o, por su inacción, dejar que un ser humano sufra daño. Un robot debe obedecer las órde nes que le son dadas por un ser humano, excepto cuando estas órdenes están en oposición con la primera. Un robot debe proteger su propia existencia, hasta donde esta protección no esté en conflicto con la primera o segunda Leyes.</string>
     <string name="hint_collect_text">Ingrese el texto de arriba.</string>
