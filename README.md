@@ -63,12 +63,13 @@ Para esto, envía peticiones al Model Service que a su vez las delega en el Tens
 La captura de datos de los sensores se realiza de manera similar a la de la fase de captua, 
 enviando paquetes de 50x12 una vez cada segundo.
 
-<img alt="Login" src="DOC/login.jpeg" width="200">
-<img alt="Sign Up" src="DOC/signup.jpeg" width="200">
-<img alt="Main Menu" src="DOC/menu.jpeg" width="200">
-<img alt="Data Collection" src="DOC/data-collection.jpeg" width="200">
-<img alt="Inference" src="DOC/inference.jpeg" width="200">
-
+<table><tr>
+<td><img alt="Login" src="DOC/login.jpeg" width="200"></td>
+<td><img alt="Sign Up" src="DOC/signup.jpeg" width="200"></td>
+<td><img alt="Main Menu" src="DOC/menu.jpeg" width="200"></td>
+<td><img alt="Data Collection" src="DOC/data-collection.jpeg" width="200"></td>
+<td><img alt="Inference" src="DOC/inference.jpeg" width="200"></td>
+</tr></table>
 
 ## Características del Modelo usado
 ![LSTM Network](DOC/LSTM.png)
