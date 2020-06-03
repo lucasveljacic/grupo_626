@@ -62,15 +62,20 @@ public class SignUpActivity extends AppCompatActivity {
         eventTrackerService = new EventTrackerService(session);
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        signUpButton.setEnabled(true);
+    }
+
     public void signUp() {
         Log.d(TAG, "Signing Up");
+        signUpButton.setEnabled(false);
 
         if (!validate()) {
             onSignUpFailed("Error de validación");
             return;
         }
-
-        signUpButton.setEnabled(false);
 
         final ProgressDialog progressDialog = new ProgressDialog(SignUpActivity.this);
         progressDialog.setIndeterminate(true);
@@ -118,11 +123,6 @@ public class SignUpActivity extends AppCompatActivity {
                 onSignUpFailed(t.getMessage());
             }
         });
-    }
-
-    @Override
-    public void onBackPressed() {
-        moveTaskToBack(true);
     }
 
     public void onSignUpSuccess(String email) {

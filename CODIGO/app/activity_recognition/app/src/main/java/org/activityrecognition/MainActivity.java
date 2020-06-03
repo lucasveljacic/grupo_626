@@ -64,13 +64,17 @@ public class MainActivity extends AppCompatActivity {
         if (session.getModelState() == null) {
             createModel();
         }
-
-        updateView();
-
         eventTrackerService = new EventTrackerService(session);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        updateView();
+    }
+
     private void createModel() {
+        disableActions();
         String modelName = session.getModelName();
         // launch a thread with the http call to the external service
         Call<ModelDTO> call = getModelClient().create(modelName);
@@ -79,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
             public void onResponse(Call<ModelDTO> call, Response<ModelDTO> response) {
                 if (response.isSuccessful()) {
                     Log.i(TAG, "Model created successfully!");
-                    session.setModelState(ModelState.NEW);
+                    session.setModelState(response.body().getState());
                     eventTrackerService.pushEvent(EventType.MODEL_CREATED, String.format("Modelo %s creado exitosamente", modelName));
                     updateView();
                 } else {
@@ -100,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void resetModel() {
+        disableActions();
         // launch a thread with the http call to the external service
         Call<EventResponseDTO> call = getModelClient().pushEvent(session.getModelName(), ModelEvent.RESET.name());
         call.enqueue(new Callback<EventResponseDTO>() {
@@ -108,41 +113,38 @@ public class MainActivity extends AppCompatActivity {
                 if (response.isSuccessful()) {
                     Log.i(TAG, "Model reset successfully!");
                     session.setModelState(ModelState.NEW);
-                    updateView();
                 } else {
                     Log.e(TAG, response.message());
                 }
+                updateView();
             }
 
             @Override
             public void onFailure(Call<EventResponseDTO> call, Throwable t) {
                 Log.e(TAG, "Unable to submit post to API. "+ t.getMessage());
                 t.printStackTrace();
+                updateView();
             }
         });
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        updateView();
-    }
-
     private void startTraining() {
+        disableActions();
         TriggerTrainingAsyncTaskRunner runner = new TriggerTrainingAsyncTaskRunner();
         runner.execute();
     }
 
     private void collectUser1Metrics() {
-        collectUser1Button.setEnabled(false);
+        disableActions();
         collectUserMetrics("1");
     }
     private void collectUser2Metrics() {
-        collectUser2Button.setEnabled(false);
+        disableActions();
         collectUserMetrics("2");
     }
 
     private void collectUserMetrics(String id) {
+        disableActions();
         Intent intent = new Intent(getApplicationContext(), CollectActivity.class);
         intent.putExtra("USER_ID", id);
         intent.putExtra("COLLECTION_TIME_SEC", COLLECT_TIME_SEC);
@@ -154,13 +156,15 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    private void updateView() {
-        ModelState modelState = session.getModelState();
-
+    private void disableActions() {
         collectUser1Button.setEnabled(false);
         collectUser2Button.setEnabled(false);
         trainButton.setEnabled(false);
         predictButton.setEnabled(false);
+    }
+    private void updateView() {
+        disableActions();
+        ModelState modelState = session.getModelState();
 
         if (modelState == null) {
             return;
@@ -243,7 +247,7 @@ public class MainActivity extends AppCompatActivity {
         protected void onPreExecute() {
             progressDialog = ProgressDialog.show(MainActivity.this,
                     "Entrenando el modelo",
-                    "Aguarde por favor... esta tarea puede demorar unos minutos");
+                    "Aguarde por favor... esta tarea puede demorar varios minutos");
         }
 
         @Override

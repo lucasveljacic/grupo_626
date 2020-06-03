@@ -52,6 +52,8 @@ public class LoginActivity extends AppCompatActivity {
         signUpLink = findViewById(R.id.link_signup);
 
         signUpLink.setOnClickListener(v -> {
+            signUpLink.setEnabled(false);
+            loginButton.setEnabled(false);
             Intent intent = new Intent(getApplicationContext(), SignUpActivity.class);
             startActivity(intent);
         });
@@ -60,15 +62,21 @@ public class LoginActivity extends AppCompatActivity {
         eventTrackerService = new EventTrackerService(session);
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        signUpLink.setEnabled(true);
+        loginButton.setEnabled(true);
+    }
+
     public void login() {
         Log.d(TAG, "Login");
+        loginButton.setEnabled(false);
 
         if (!validate()) {
             onLoginFailed("Error de validación");
             return;
         }
-
-        loginButton.setEnabled(false);
 
         final ProgressDialog progressDialog = new ProgressDialog(LoginActivity.this);
         progressDialog.setIndeterminate(true);

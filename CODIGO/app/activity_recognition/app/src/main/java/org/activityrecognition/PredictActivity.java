@@ -1,13 +1,11 @@
 package org.activityrecognition;
 
-import android.gesture.Prediction;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.res.FontResourcesParserCompat;
 
 import org.activityrecognition.client.model.ModelClient;
 import org.activityrecognition.client.model.ModelClientFactory;
@@ -78,10 +76,10 @@ public class PredictActivity extends AppCompatActivity implements PacketListener
                     int p;
                     if (prediction < 0.5) {
                         p = (int) (100*(1-prediction));
-                        txtPrediction = "USUARIO 1 - " + p + "%";
+                        txtPrediction = "USUARIO 1 - (" + p + "%)";
                     } else {
                         p = (int) (100*prediction);
-                        txtPrediction = "USUARIO 2 - " + p + "%";
+                        txtPrediction = "USUARIO 2 - (" + p + "%)";
                     }
 
                     Log.i(TAG, String.format("Prediction: %f", response.body().getPrediction()));
