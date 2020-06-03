@@ -26,7 +26,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
-    private static final int COLLECT_TIME_SEC = 10;
+    private static final int COLLECT_TIME_SEC = 60;
     private final String TAG = "ACTREC_MENU";
 
     private SessionManager session;

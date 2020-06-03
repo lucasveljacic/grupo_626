@@ -83,3 +83,10 @@ lint/generated/
 lint/outputs/
 lint/tmp/
 # lint/reports/
+
+CODIGO/models/.ipynb_checkpoints/
+CODIGO/models/BK/
+CODIGO/models/Utils.ipynb
+CODIGO/models/best_model.h5
+
+

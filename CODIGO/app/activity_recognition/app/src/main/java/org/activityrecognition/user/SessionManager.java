@@ -53,7 +53,11 @@ public class SessionManager {
     }
 
     public String getModelName() {
-        return pref.getString(KEY_MODEL_NAME, "undefined");
+        String modelName = pref.getString(KEY_MODEL_NAME, null);
+        if (modelName == null) {
+            logoutUser();
+        }
+        return modelName;
     }
 
     public ModelState getModelState() {

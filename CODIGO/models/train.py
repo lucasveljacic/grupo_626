@@ -117,7 +117,7 @@ model.summary()
 # fit model
 # simple early stopping
 
-es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=3)
+es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=3, min_delta=1)
 mc = ModelCheckpoint(checkpoint_file, monitor='val_loss', mode='min', verbose=1, save_best_only=True)
 
 history = model.fit(
