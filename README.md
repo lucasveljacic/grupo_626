@@ -7,7 +7,7 @@ utilizando Machine Learning y datos de métricas recolectadas de los sensores de
 ## Arquitectura
 ![Architecture Diagram](DOC/activity-recgnition-architecture.png)
 
-### Detalle de módulos
+## Detalle de módulos
 
 #### SSO
 Single Sign On provisto por La Cátedra de SOA. Se compone de un API REST con los servicios necesarios para registrar y hacer el login de los usuarios.
@@ -16,24 +16,28 @@ Single Sign On provisto por La Cátedra de SOA. Se compone de un API REST con lo
 Servicio provisto por La Catedra de SOA. Se compone de un API REST con los servicios necesarios para informar eventos de la APP.
 
 #### Model Service
-Servicio REST que permite crear, entrenar, resetear (usado para reentrenar) y eliminar modelos asi como tambien expone un endpoint para realizar las inferencias.
-Se encuentra desarrollada en Java usando Spring Boot.
+Servicio REST que permite crear, entrenar, resetear (usado para reentrenar) y eliminar modelos así como también expone un endpoint para realizar las inferencias.
+Se encuentra desarrollado en Java usando Spring Boot.
+Se encuentra desplegado en AWS.
 
 #### Scripts Python
-Utilizados para entrenar el modelo y en la etapa de modeling y tuning. 
+Utilizados para entrenar el modelo y en la etapas previas de modeling y tuning del mismo. 
 El script de training (train.py) recibe un path donde debe ir a buscar los datos de los sensores 
-recolectados por la APP android y otro path donde debe escribir el modelo entrenado. Este sera luego 
+recolectados por la APP android y otro path donde debe escribir el modelo entrenado. Este será luego 
 usado en la fase de predicción.
-El script train.py es invocado por el Model Service cuando el modelo ha finalizado su fase de 
+El script *train.py* es invocado por el Model Service cuando el modelo ha finalizado su fase de 
 recolección de datos y debe comenzar el training.
+Se encuentran desplegados en AWS.
 
 
-#### Tensorflow Serving https://www.tensorflow.org/tfx/guide/serving
+#### Tensorflow Serving 
 Este servicio (de terceros) es utilizado para el servido del modelo. 
 Expone un API REST para realizar las predicciones. Sólo se le debe proporcionar el path donde se 
 encuentran los modelos a servir. Admite cambios y re-deploys de los modelos sin requerir reinicio 
 del servicio lo cual lo hizo adecuado para el proyecto. 
+Se encuentra desplegado en AWS.
 
+https://www.tensorflow.org/tfx/guide/serving
 
 ### Modo de uso de la APP
 
@@ -59,12 +63,14 @@ Para esto, envía peticiones al Model Service que a su vez las delega en el Tens
 La captura de datos de los sensores se realiza de manera similar a la de la fase de captua, 
 enviando paquetes de 50x12 una vez cada segundo.
 
+![Login](DOC/login.jpeg)
+![Sign Up](DOC/signup.jpeg)
 ![Menu](DOC/menu.jpeg)
 ![Data collection](DOC/data-collection.jpeg)
 ![Data collection](DOC/inference.jpeg)
 
 
-### Consideraciones sobre el modelo
+### Características del Modelo usado
 ![LSTM Network](DOC/LSTM.png)
 El modelo usado es una red neuronal de tipo RNN (Recursive Neural Network). Concretamente una red 
 con una capa de LSTM (Long Short Term Memory) a la que se le entrena con inputs o tensores de (N, 50, 12),
