@@ -5,7 +5,8 @@ que son parte de un sistema cuyo proposito principal es el de reconocer la activ
 utilizando Machine Learning y datos de métricas recolectadas de los sensores de un dispositivo mobil.
 
 ## Arquitectura
-<div style="text-align:center"><img src="DOC/activity-recgnition-architecture.png" /></div>
+
+<img alt="Architecture Diagram" align="center" src="DOC/activity-recgnition-architecture.png" />
 
 ## Detalle de módulos
 
