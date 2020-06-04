@@ -6,7 +6,7 @@ utilizando Machine Learning y datos de métricas recolectadas de los sensores de
 
 ## Arquitectura
 
-<img alt="Architecture Diagram" align="center" src="DOC/activity-recgnition-architecture.png" />
+<img alt="Architecture Diagram" style="align:center" src="DOC/activity-recgnition-architecture.png" />
 
 ## Detalle de módulos
 
