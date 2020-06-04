@@ -253,5 +253,8 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onProgressUpdate(String... text) {}
     }
-
+    @Override
+    public void onBackPressed() {
+        moveTaskToBack(true);
+    }
 }
