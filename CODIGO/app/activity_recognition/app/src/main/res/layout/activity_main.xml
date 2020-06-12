@@ -1,94 +1,100 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    android:theme="@style/Theme.MaterialComponents.Light"
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:context=".MainActivity">
+    android:fillViewport="true">
 
     <LinearLayout
-        android:orientation="horizontal"
+        android:theme="@style/Theme.MaterialComponents.Light"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="10dp">
-
-        <Button
-            android:id="@+id/btn_loguot"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="0sp"
-            android:text="@string/logout"
-            android:drawableStart="@drawable/baseline_exit_to_app_black_18dp"
-            />
-
-        <Button
-            android:id="@+id/btn_reset"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="0sp"
-            android:text="@string/reset_model"
-            android:drawableEnd="@drawable/baseline_refresh_black_18dp"
-            />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingTop="40dp"
-        android:paddingStart="10dp"
-        android:paddingEnd="10dp">
-
-        <Button
-            android:id="@+id/btn_collect_user_1"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="@string/collect_user_1"
-            />
-
-        <Button
-            android:id="@+id/btn_collect_user_2"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="@string/collect_user_2"
-            />
-
-    </LinearLayout>
-
-    <LinearLayout
+        android:layout_height="match_parent"
         android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingTop="40dp"
-        android:paddingStart="10dp"
-        android:paddingEnd="10dp">
+        tools:context=".MainActivity">
 
-        <Button
-            android:id="@+id/btn_train"
-            android:layout_width="fill_parent"
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/train_model"
-            android:layout_marginTop="24dp"
-            android:layout_marginBottom="24dp"
-            android:padding="12dp"
-            />
+            android:padding="10dp">
 
-        <Button
-            android:id="@+id/btn_predict"
-            android:layout_width="fill_parent"
+            <Button
+                android:id="@+id/btn_loguot"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="0sp"
+                android:text="@string/logout"
+                android:drawableStart="@drawable/baseline_exit_to_app_black_18dp"
+                />
+
+            <Button
+                android:id="@+id/btn_reset"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="0sp"
+                android:text="@string/reset_model"
+                android:drawableEnd="@drawable/baseline_refresh_black_18dp"
+                />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/predict_user"
-            android:layout_marginTop="24dp"
-            android:layout_marginBottom="24dp"
-            android:padding="12dp"
-            />
+            android:paddingTop="40dp"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp">
+
+            <Button
+                android:id="@+id/btn_collect_user_1"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="@string/collect_user_1"
+                />
+
+            <Button
+                android:id="@+id/btn_collect_user_2"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="@string/collect_user_2"
+                />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="40dp"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp">
+
+            <Button
+                android:id="@+id/btn_train"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/train_model"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="24dp"
+                android:padding="12dp"
+                />
+
+            <Button
+                android:id="@+id/btn_predict"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/predict_user"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="24dp"
+                android:padding="12dp"
+                />
+
+        </LinearLayout>
 
     </LinearLayout>
-
-</LinearLayout>
+</ScrollView>

@@ -7,8 +7,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import org.activityrecognition.client.model.EventResponseDTO;
 import org.activityrecognition.client.model.ModelClient;
 import org.activityrecognition.client.model.ModelClientFactory;
@@ -25,8 +23,8 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class MainActivity extends AppCompatActivity {
-    private static final int COLLECT_TIME_SEC = 60;
+public class MainActivity extends BaseActivity {
+    private static final int COLLECTION_MAX_PACKS = 10;
     private final String TAG = "ACTREC_MENU";
 
     private SessionManager session;
@@ -41,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "performing onCreate()");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -61,16 +60,48 @@ public class MainActivity extends AppCompatActivity {
         resetButton.setOnClickListener(v -> resetModel());
         logoutButton.setOnClickListener(v -> logout());
 
+        loadModelState();
         if (session.getModelState() == null) {
             createModel();
         }
+
         eventTrackerService = new EventTrackerService(session);
     }
 
+    private void loadModelState() {
+        getModelClient().get(session.getModelName()).enqueue(new Callback<ModelDTO>() {
+            @Override
+            public void onResponse(Call<ModelDTO> call, Response<ModelDTO> response) {
+                if (response.isSuccessful()) {
+                    ModelState state = response.body().getState();
+                    if (state != null) {
+                        Log.i(TAG, String.format("Loaded model state: %s", state));
+                        session.setModelState(state);
+                        updateView();
+                    }
+                } else {
+                    Log.e(TAG, "Unable to load model state!");
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ModelDTO> call, Throwable t) {
+                Log.e(TAG, "Unable to load model state. "+ t.getMessage());
+                t.printStackTrace();
+            }
+        });
+    }
+
     @Override
-    protected void onResume() {
+    public void onResume() {
         super.onResume();
+        Log.d(TAG, "performing onResume()");
         updateView();
+    }
+
+    @Override
+    public void onBackPressed() {
+        moveTaskToBack(true);
     }
 
     private void createModel() {
@@ -129,16 +160,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startTraining() {
+        if (isOffline()) {
+            return;
+        }
         disableActions();
         TriggerTrainingAsyncTaskRunner runner = new TriggerTrainingAsyncTaskRunner();
         runner.execute();
     }
 
     private void collectUser1Metrics() {
+        if (isOffline()) {
+            return;
+        }
         disableActions();
         collectUserMetrics("1");
     }
     private void collectUser2Metrics() {
+        if (isOffline()) {
+            return;
+        }
         disableActions();
         collectUserMetrics("2");
     }
@@ -147,11 +187,14 @@ public class MainActivity extends AppCompatActivity {
         disableActions();
         Intent intent = new Intent(getApplicationContext(), CollectActivity.class);
         intent.putExtra("USER_ID", id);
-        intent.putExtra("COLLECTION_TIME_SEC", COLLECT_TIME_SEC);
+        intent.putExtra("COLLECTION_MAX_PACKS", COLLECTION_MAX_PACKS);
         startActivity(intent);
     }
 
     private void startPrediction() {
+        if (isOffline()) {
+            return;
+        }
         Intent intent = new Intent(getApplicationContext(), PredictActivity.class);
         startActivity(intent);
     }
@@ -162,6 +205,7 @@ public class MainActivity extends AppCompatActivity {
         trainButton.setEnabled(false);
         predictButton.setEnabled(false);
     }
+
     private void updateView() {
         disableActions();
         ModelState modelState = session.getModelState();
@@ -172,13 +216,18 @@ public class MainActivity extends AppCompatActivity {
 
         switch (modelState) {
             case NEW:
+            case COLLECTING_1:
                 collectUser1Button.setEnabled(true);
                 break;
             case COLLECTED_1:
+            case COLLECTING_2:
                 collectUser2Button.setEnabled(true);
                 break;
             case COLLECTED_2:
                 trainButton.setEnabled(true);
+                break;
+            case TRAINING:
+                startTraining();
                 break;
             case SERVING:
                 predictButton.setEnabled(true);
@@ -201,34 +250,42 @@ public class MainActivity extends AppCompatActivity {
         protected String doInBackground(String... params) {
             String modelName = session.getModelName();
 
-            // launch a thread with the http call to the external service
-            Call<EventResponseDTO> call = getModelClient().pushEvent(modelName, ModelEvent.START_TRAINING.name());
             try {
-                Response<EventResponseDTO> response = call.execute();
-                if (response.isSuccessful()) {
-                    Log.i(TAG, String.format("Event %s sent successfully!", ModelEvent.START_TRAINING.name()));
-
-                    Call<ModelDTO> callGet;
-                    Response<ModelDTO> responseGet;
-                    ModelState state = null;
-
-                    int totalSleepSeconds = 0;
-                    do {
-                        callGet = getModelClient().get(modelName);
-                        responseGet = callGet.execute();
-                        if (responseGet.isSuccessful()) {
-                            state = responseGet.body().getState();
-                        }
-                        Thread.sleep(5 * 1000);
-                        totalSleepSeconds += 5;
-                    } while (state != ModelState.SERVING && totalSleepSeconds < 300);
-
-                    eventTrackerService.pushEvent(EventType.MODEL_TRAINED, String.format("Modelo %s entrenado exitosamente", modelName));
-
-                    session.setModelState(ModelState.SERVING);
-                } else {
-                    Log.e(TAG, response.message());
+                // launch a thread with the http call to the external service
+                if (session.getModelState() != ModelState.TRAINING) {
+                    session.setModelState(ModelState.TRAINING);
+                    Call<EventResponseDTO> call = getModelClient().pushEvent(modelName, ModelEvent.START_TRAINING.name());
+                    Response<EventResponseDTO> response = call.execute();
+                    if (!response.isSuccessful()) {
+                        Log.e(TAG, response.message());
+                        return "FAILURE";
+                    } else {
+                        Log.i(TAG, String.format("Event %s sent successfully!", ModelEvent.START_TRAINING.name()));
+                    }
                 }
+
+                // start polling for training completion
+                Call<ModelDTO> callGet;
+                Response<ModelDTO> responseGet;
+                ModelState state = null;
+
+                int totalSleepSeconds = 0;
+                do {
+                    if (isOffline()) {
+                        return "ERROR";
+                    }
+                    callGet = getModelClient().get(modelName);
+                    responseGet = callGet.execute();
+                    if (responseGet.isSuccessful()) {
+                        state = responseGet.body().getState();
+                    }
+                    Thread.sleep(5 * 1000);
+                    totalSleepSeconds += 5;
+                } while (state != ModelState.SERVING && totalSleepSeconds < 300);
+
+                eventTrackerService.pushEvent(EventType.MODEL_TRAINED, String.format("Modelo %s entrenado exitosamente", modelName));
+
+                session.setModelState(ModelState.SERVING);
             } catch (IOException | InterruptedException e) {
                 Log.e(TAG, "Unable submit event. "+ e.getMessage());
                 e.printStackTrace();
@@ -237,8 +294,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        protected void onPostExecute(String modelState) {
-            Log.e(TAG, "Model state result: "+ modelState);
+        protected void onPostExecute(String result) {
+            Log.e(TAG, "Model state result: "+ result);
             updateView();
             progressDialog.dismiss();
         }
@@ -252,9 +309,5 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onProgressUpdate(String... text) {}
-    }
-    @Override
-    public void onBackPressed() {
-        moveTaskToBack(true);
     }
 }

@@ -7,10 +7,9 @@ import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import com.google.android.material.textfield.TextInputLayout;
 
+import org.activityrecognition.BaseActivity;
 import org.activityrecognition.MainActivity;
 import org.activityrecognition.R;
 import org.activityrecognition.client.auth.AuthClient;
@@ -26,7 +25,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class SignUpActivity extends AppCompatActivity {
+public class SignUpActivity extends BaseActivity {
     private static final String TAG = "ACTREC_SIGNUP";
 
     private AuthClient client;
@@ -70,6 +69,10 @@ public class SignUpActivity extends AppCompatActivity {
 
     public void signUp() {
         Log.d(TAG, "Signing Up");
+        if (isOffline()) {
+            return;
+        }
+
         signUpButton.setEnabled(false);
 
         if (!validate()) {

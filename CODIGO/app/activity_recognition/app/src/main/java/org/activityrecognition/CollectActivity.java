@@ -3,9 +3,9 @@ package org.activityrecognition;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 
 import org.activityrecognition.client.model.MeasureRequest;
 import org.activityrecognition.client.model.ModelClient;
@@ -21,22 +21,25 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class CollectActivity extends AppCompatActivity implements PacketListenerTrain {
+public class CollectActivity extends BaseActivity implements PacketListenerTrain {
     private final String TAG = "ACTREC_TRAIN";
 
+    private int COLLECTION_MAX_PACKS = 60;
+    private int sentDataPackets = 0;
+    private TextView txtDataPackets;
     private SessionManager session;
     private ModelClient modelClient;
     private String userId;
     private SensorCollectorForTrain sensorPacketCollector;
-    private long startTime = -1;
-    private int collectionTime;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_collect);
 
-        collectionTime = getIntent().getIntExtra("COLLECTION_TIME_SEC", 60);
+        txtDataPackets = findViewById(R.id.txt_data_packets);
+
+        COLLECTION_MAX_PACKS = getIntent().getIntExtra("COLLECTION_MAX_PACKS", 60);
         userId = getIntent().getStringExtra("USER_ID");
 
         session = new SessionManager(getApplicationContext());
@@ -52,7 +55,7 @@ public class CollectActivity extends AppCompatActivity implements PacketListener
         alertDialog.setMessage(getString(R.string.text_instructions_collect));
         alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "ACEPTAR",
                 (dialog, which) -> {
-                    startTime = System.currentTimeMillis();
+                    sensorPacketCollector.registerListener(this);
                     sensorPacketCollector.start();
                     dialog.dismiss();
                 });
@@ -66,9 +69,17 @@ public class CollectActivity extends AppCompatActivity implements PacketListener
         return modelClient;
     }
 
+    private void updateDataPackets() {
+        txtDataPackets.setText(getString(R.string.data_packets, sentDataPackets));
+    }
+
     @Override
     public void onPackageComplete(List<String> packet) {
-        if (startTime > 0 && System.currentTimeMillis() > startTime + collectionTime * 1000) {
+        if (isOffline()) {
+            interruptCollection();
+        }
+
+        if (sentDataPackets >= COLLECTION_MAX_PACKS) {
             endOfCollection();
         }
 
@@ -80,6 +91,9 @@ public class CollectActivity extends AppCompatActivity implements PacketListener
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if (response.isSuccessful()) {
                     Log.i(TAG, "packet pushed successfully!");
+                    sentDataPackets++;
+
+                    updateDataPackets();
                 } else {
                     Log.e(TAG, response.message());
                 }
@@ -96,39 +110,72 @@ public class CollectActivity extends AppCompatActivity implements PacketListener
     private void endOfCollection() {
         sensorPacketCollector.stop();
         sensorPacketCollector.unregisterListener();
+        session.setSentDataPackets(0);
+        if (userId.equals("1")) {
+            session.setModelState(ModelState.COLLECTED_1);
+        } else {
+            session.setModelState(ModelState.COLLECTED_2);
+        }
 
         AlertDialog alertDialog = new AlertDialog.Builder(CollectActivity.this).create();
         alertDialog.setCanceledOnTouchOutside(false);
         alertDialog.setMessage("Fin de la captura de datos");
         alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "ACEPTAR",
                 (dialog, which) -> {
-                    sensorPacketCollector.stop();
-                    sensorPacketCollector.unregisterListener();
-                    if (userId.equals("1")) {
-                        session.setModelState(ModelState.COLLECTED_1);
-                    } else {
-                        session.setModelState(ModelState.COLLECTED_2);
-                    }
+                    CollectActivity.this.finish();
+                });
+        alertDialog.show();
+    }
+
+    private void interruptCollection() {
+        sensorPacketCollector.unregisterListener();
+        sensorPacketCollector.stop();
+        AlertDialog alertDialog = new AlertDialog.Builder(CollectActivity.this).create();
+        alertDialog.setCanceledOnTouchOutside(false);
+        alertDialog.setMessage("Error de conexión a Internet. Intente continuar más tarde.");
+        alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "ACEPTAR",
+                (dialog, which) -> {
                     CollectActivity.this.finish();
                 });
         alertDialog.show();
     }
 
     @Override
-    protected void onPause() {
+    public void onPause() {
         super.onPause();
         sensorPacketCollector.unregisterListener();
+        sensorPacketCollector.stop();
+        session.setSentDataPackets(sentDataPackets);
     }
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         super.onResume();
-        sensorPacketCollector.registerListener(this);
+
+        if (session.getModelState() != ModelState.COLLECTING_1
+                && session.getModelState() != ModelState.COLLECTING_2) {
+            if (userId.equals("1")) {
+                session.setModelState(ModelState.COLLECTING_1);
+            } else {
+                session.setModelState(ModelState.COLLECTING_2);
+            }
+            showExplanationDialog();
+        } else {
+            sentDataPackets = session.getSentDataPackets(0);
+            sensorPacketCollector.registerListener(this);
+            sensorPacketCollector.start();
+        }
+
+        updateDataPackets();
     }
 
     @Override
-    protected void onStart() {
+    public void onStart() {
         super.onStart();
-        showExplanationDialog();
+    }
+
+    @Override
+    public void onRestart() {
+        super.onRestart();
     }
 }

@@ -8,10 +8,9 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import com.google.android.material.textfield.TextInputLayout;
 
+import org.activityrecognition.BaseActivity;
 import org.activityrecognition.MainActivity;
 import org.activityrecognition.R;
 import org.activityrecognition.client.auth.AuthClient;
@@ -27,7 +26,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class LoginActivity extends AppCompatActivity {
+public class LoginActivity extends BaseActivity {
     private static final String TAG = "ACTREC_LOGIN";
     private EventTrackerService eventTrackerService;
     private AuthClient userClient;
@@ -71,6 +70,10 @@ public class LoginActivity extends AppCompatActivity {
 
     public void login() {
         Log.d(TAG, "Login");
+        if (isOffline()) {
+            return;
+        }
+
         loginButton.setEnabled(false);
 
         if (!validate()) {

@@ -13,6 +13,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light"
         android:usesCleartextTraffic="true">
+        <receiver android:name=".NetworkChangeReceiver" >
+            <intent-filter>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+            </intent-filter>
+        </receiver>
         <activity
             android:name="org.activityrecognition.PredictActivity"
             android:label="@string/title_activity_predict" />

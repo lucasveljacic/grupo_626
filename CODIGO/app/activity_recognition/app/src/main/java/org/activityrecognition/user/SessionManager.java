@@ -1,14 +1,13 @@
 package org.activityrecognition.user;
 
-import java.util.HashMap;
-
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import android.graphics.ColorSpace;
 
 import org.activityrecognition.client.model.ModelState;
+
+import java.util.HashMap;
 
 public class SessionManager {
     private SharedPreferences pref;
@@ -21,6 +20,7 @@ public class SessionManager {
     public static final String KEY_EMAIL = "email";
     public static final String KEY_MODEL_NAME = "modelName";
     public static final String KEY_MODEL_STATE = "modelState";
+    private static final String KEY_SENT_DATA_PACKETS = "sentDataPackets";
 
     public SessionManager(Context context){
         this.context = context;
@@ -73,6 +73,15 @@ public class SessionManager {
         editor.commit();
     }
 
+    public int getSentDataPackets(int defValue) {
+        return Integer.parseInt(pref.getString(KEY_SENT_DATA_PACKETS, String.valueOf(defValue)));
+    }
+
+    public void setSentDataPackets(int sentDataPackets) {
+        editor.putString(KEY_SENT_DATA_PACKETS, String.valueOf(sentDataPackets));
+        editor.commit();
+    }
+
     public void logoutUser() {
         editor.clear();
         editor.commit();
@@ -87,4 +96,5 @@ public class SessionManager {
     public boolean isLoggedIn(){
         return pref.getBoolean(IS_LOGGED_IN, false);
     }
+
 }
