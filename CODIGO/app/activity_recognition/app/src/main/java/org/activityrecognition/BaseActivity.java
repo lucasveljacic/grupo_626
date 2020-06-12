@@ -16,13 +16,15 @@ import org.activityrecognition.client.model.ModelEvent;
 import org.activityrecognition.client.model.ModelState;
 import org.activityrecognition.user.SessionManager;
 
+import java.io.IOException;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public abstract class BaseActivity extends AppCompatActivity {
 
-    private static final String TAG = "ACTREC_BASEACTIVITY";
+    private static String TAG;
     private NetworkChangeReceiver mNetworkReceiver;
     private ModelClient modelClient;
     protected SessionManager session;
@@ -30,6 +32,9 @@ public abstract class BaseActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        TAG = "ACTREC_" + getClass().getName().toUpperCase();
+
+        Log.d(TAG, "performing onCreate()");
 
         session = new SessionManager(getApplicationContext());
         session.checkLogin();
@@ -56,7 +61,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         return !mNetworkReceiver.isOnline();
     }
 
-    protected abstract void disableActions();
+    protected abstract void disableControls();
     protected abstract void updateView();
 
     protected ModelClient getModelClient() {
@@ -67,30 +72,32 @@ public abstract class BaseActivity extends AppCompatActivity {
     }
 
     protected void sendModelTransition(ModelEvent event) {
-        disableActions();
-        // launch a thread with the http call to the external service
-        Call<EventResponseDTO> call = getModelClient().pushEvent(session.getModelName(), event.name());
-        call.enqueue(new Callback<EventResponseDTO>() {
-            @Override
-            public void onResponse(Call<EventResponseDTO> call, Response<EventResponseDTO> response) {
-                if (response.isSuccessful()) {
-                    Log.i(TAG, "Event sent successfully!");
-                    loadModelState();
-                    updateView();
-                } else {
-                    Log.e(TAG, response.message());
-                }
-            }
+        disableControls();
 
-            @Override
-            public void onFailure(Call<EventResponseDTO> call, Throwable t) {
-                Log.e(TAG, "Unable to submit post to API. "+ t.getMessage());
-                t.printStackTrace();
-            }
-        });
+        // launch a thread with the http call to the external service
+        getModelClient()
+                .pushEvent(session.getModelName(), event.name())
+                .enqueue(new Callback<EventResponseDTO>() {
+                    @Override
+                    public void onResponse(Call<EventResponseDTO> call, Response<EventResponseDTO> response) {
+                        if (response.isSuccessful()) {
+                            Log.i(TAG, String.format("Event %s sent successfully!", event.name()));
+                            session.setModelState(response.body().getModel().getState());
+                            updateView();
+                        } else {
+                            Log.e(TAG, response.message());
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<EventResponseDTO> call, Throwable t) {
+                        Log.e(TAG, "Unable to submit post to API. "+ t.getMessage());
+                        t.printStackTrace();
+                    }
+                });
     }
 
-    protected void loadModelState() {
+    protected void loadModelStateAsync() {
         getModelClient().get(session.getModelName()).enqueue(new Callback<ModelDTO>() {
             @Override
             public void onResponse(Call<ModelDTO> call, Response<ModelDTO> response) {
@@ -112,6 +119,21 @@ public abstract class BaseActivity extends AppCompatActivity {
                 t.printStackTrace();
             }
         });
+    }
+
+    protected void loadModelStateSync() {
+        try {
+            Response<ModelDTO> response = getModelClient().get(session.getModelName()).execute();
+            if (response.isSuccessful()) {
+                ModelState state = response.body().getState();
+                if (state != null) {
+                    Log.i(TAG, String.format("Loaded model state: %s", state));
+                    session.setModelState(state);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

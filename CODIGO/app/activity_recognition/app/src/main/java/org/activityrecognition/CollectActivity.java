@@ -8,7 +8,6 @@ import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 
 import org.activityrecognition.client.model.MeasureRequest;
-import org.activityrecognition.client.model.ModelClient;
 import org.activityrecognition.client.model.ModelEvent;
 import org.activityrecognition.client.model.ModelState;
 import org.activityrecognition.measure.PacketListenerTrain;
@@ -22,15 +21,17 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class CollectActivity extends BaseActivity implements PacketListenerTrain {
-    private final String TAG = "ACTREC_TRAIN";
+    private final String TAG = "ACTREC_COLLECT";
 
-    private int COLLECTION_MAX_PACKS = 60;
+    private final String USER_1 = "1";
+    private final String USER_2 = "2";
+
+    private int COLLECTION_MAX_PACKS;
     private int sentDataPackets = 0;
     private TextView txtDataPackets;
-    private SessionManager session;
-    private ModelClient modelClient;
     private String userId;
     private SensorCollectorForTrain sensorPacketCollector;
+    private boolean actionsStopped;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -47,56 +48,95 @@ public class CollectActivity extends BaseActivity implements PacketListenerTrain
 
         SensorManager sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         sensorPacketCollector = new SensorCollectorForTrain(sensorManager);
+
+        switch (session.getModelState()) {
+            case NEW:
+                session.setModelState(ModelState.COLLECTING_1);
+                showExplanationDialog();
+                break;
+            case COLLECTED_1:
+                session.setModelState(ModelState.COLLECTING_2);
+                showExplanationDialog();
+                break;
+        }
     }
 
     @Override
-    protected void disableActions() {
+    public void onPause() {
+        super.onPause();
+        stopActivityActions();
+        session.setSentDataPackets(sentDataPackets);
+    }
 
+    @Override
+    public void onStop() {
+        super.onStop();
+        stopActivityActions();
+        session.setSentDataPackets(sentDataPackets);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        sentDataPackets = session.getSentDataPackets(0);
+        startActivityActions();
+        updateView();
     }
 
     @Override
     protected void updateView() {
+        txtDataPackets.setText(getString(R.string.data_packets, sentDataPackets));
+    }
 
+    private void stopActivityActions() {
+        sensorPacketCollector.unregisterListener();
+        sensorPacketCollector.stop();
+    }
+
+    private void startActivityActions() {
+        sensorPacketCollector.registerListener(this);
+        sensorPacketCollector.start();
     }
 
     private void showExplanationDialog() {
+        actionsStopped = true;
         AlertDialog alertDialog = new AlertDialog.Builder(CollectActivity.this).create();
         alertDialog.setCanceledOnTouchOutside(false);
         alertDialog.setMessage(getString(R.string.text_instructions_collect));
-        alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "ACEPTAR",
+        alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.accept_btn_msg),
                 (dialog, which) -> {
-                    sensorPacketCollector.registerListener(this);
-                    sensorPacketCollector.start();
+                    actionsStopped = false;
                     dialog.dismiss();
                 });
         alertDialog.show();
     }
 
-    private void updateDataPackets() {
-        txtDataPackets.setText(getString(R.string.data_packets, sentDataPackets));
-    }
-
     @Override
     public void onPackageComplete(List<String> packet) {
-        if (isOffline()) {
-            interruptCollection();
+        if (actionsStopped) {
+            return;
         }
 
-        if (sentDataPackets >= COLLECTION_MAX_PACKS) {
+        if (isOffline()) {
+            interruptCollectionOnOffline();
+        }
+
+        if (sentDataPackets >= COLLECTION_MAX_PACKS-1) {
             endOfCollection();
         }
 
         // launch a thread with the http call to the external service
         MeasureRequest request = new MeasureRequest(packet);
-        Call<Void> call = getModelClient().pushMeasures(session.getModelName(), userId, request);
-        call.enqueue(new Callback<Void>() {
+        getModelClient().pushMeasures(session.getModelName(), userId, request)
+            .enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if (response.isSuccessful()) {
-                    Log.i(TAG, "packet pushed successfully!");
-                    sentDataPackets++;
-
-                    updateDataPackets();
+                    if (!actionsStopped) {
+                        Log.i(TAG, "packet pushed successfully!");
+                        incrementSentDataPackets();
+                        updateView();
+                    }
                 } else {
                     Log.e(TAG, response.message());
                 }
@@ -111,74 +151,55 @@ public class CollectActivity extends BaseActivity implements PacketListenerTrain
     }
 
     private void endOfCollection() {
-        sensorPacketCollector.stop();
-        sensorPacketCollector.unregisterListener();
-        session.setSentDataPackets(0);
-        if (userId.equals("1")) {
+        stopActivityActions();
+        if (userId.equals(USER_1)) {
             sendModelTransition(ModelEvent.END_COLLECT_1);
         } else {
             sendModelTransition(ModelEvent.END_COLLECT_2);
         }
 
-        AlertDialog alertDialog = new AlertDialog.Builder(CollectActivity.this).create();
-        alertDialog.setCanceledOnTouchOutside(false);
-        alertDialog.setMessage("Fin de la captura de datos");
-        alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "ACEPTAR",
+        AlertDialog alertDialog = buildDialog(getString(R.string.end_of_data_collection_msg));
+        alertDialog.setButton(
+                AlertDialog.BUTTON_POSITIVE,
+                "ACEPTAR",
                 (dialog, which) -> {
+                    resetSentDataPackets();
                     CollectActivity.this.finish();
                 });
         alertDialog.show();
     }
 
-    private void interruptCollection() {
-        sensorPacketCollector.unregisterListener();
-        sensorPacketCollector.stop();
-        AlertDialog alertDialog = new AlertDialog.Builder(CollectActivity.this).create();
-        alertDialog.setCanceledOnTouchOutside(false);
-        alertDialog.setMessage("Error de conexión a Internet. Intente continuar más tarde.");
-        alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "ACEPTAR",
-                (dialog, which) -> {
-                    CollectActivity.this.finish();
-                });
+    private void interruptCollectionOnOffline() {
+        stopActivityActions();
+        AlertDialog alertDialog = buildDialog(getString(R.string.offline_error_msg));
+        alertDialog.setButton(
+                AlertDialog.BUTTON_POSITIVE,
+                "ACEPTAR",
+                (dialog, which) -> CollectActivity.this.finish());
         alertDialog.show();
     }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        sensorPacketCollector.unregisterListener();
-        sensorPacketCollector.stop();
-        session.setSentDataPackets(sentDataPackets);
+    private AlertDialog buildDialog(String message) {
+        AlertDialog alertDialog = new AlertDialog.Builder(CollectActivity.this).create();
+        alertDialog.setCanceledOnTouchOutside(false);
+        alertDialog.setMessage(message);
+        return alertDialog;
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
+    protected void disableControls() {}
 
-        if (session.getModelState() != ModelState.COLLECTING_1
-                && session.getModelState() != ModelState.COLLECTING_2) {
-            if (userId.equals("1")) {
-                session.setModelState(ModelState.COLLECTING_1);
-            } else {
-                session.setModelState(ModelState.COLLECTING_2);
-            }
-            showExplanationDialog();
-        } else {
-            sentDataPackets = session.getSentDataPackets(0);
-            sensorPacketCollector.registerListener(this);
-            sensorPacketCollector.start();
+    private void incrementSentDataPackets() {
+        synchronized (this) {
+            sentDataPackets++;
+            session.setSentDataPackets(sentDataPackets);
         }
-
-        updateDataPackets();
     }
 
-    @Override
-    public void onStart() {
-        super.onStart();
-    }
-
-    @Override
-    public void onRestart() {
-        super.onRestart();
+    private void resetSentDataPackets() {
+        synchronized (this) {
+            sentDataPackets = 0;
+            session.setSentDataPackets(sentDataPackets);
+        }
     }
 }

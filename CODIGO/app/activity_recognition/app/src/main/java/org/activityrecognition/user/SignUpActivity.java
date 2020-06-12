@@ -214,7 +214,7 @@ public class SignUpActivity extends BaseActivity {
     }
 
     @Override
-    protected void disableActions() {
+    protected void disableControls() {
 
     }
 

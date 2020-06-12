@@ -68,7 +68,7 @@ public class SessionManager {
         return ModelState.valueOf(state);
     }
 
-    public void setModelState(ModelState state) {
+    synchronized public void setModelState(ModelState state) {
         editor.putString(KEY_MODEL_STATE, state.name());
         editor.commit();
     }
@@ -77,7 +77,7 @@ public class SessionManager {
         return Integer.parseInt(pref.getString(KEY_SENT_DATA_PACKETS, String.valueOf(defValue)));
     }
 
-    public void setSentDataPackets(int sentDataPackets) {
+    synchronized public void setSentDataPackets(int sentDataPackets) {
         editor.putString(KEY_SENT_DATA_PACKETS, String.valueOf(sentDataPackets));
         editor.commit();
     }

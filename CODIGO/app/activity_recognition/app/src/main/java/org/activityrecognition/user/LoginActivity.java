@@ -62,7 +62,7 @@ public class LoginActivity extends BaseActivity {
     }
 
     @Override
-    protected void disableActions() {
+    protected void disableControls() {
 
     }
 

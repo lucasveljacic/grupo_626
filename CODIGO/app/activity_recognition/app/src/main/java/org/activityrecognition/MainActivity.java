@@ -6,6 +6,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.Toast;
 
 import org.activityrecognition.client.model.EventResponseDTO;
 import org.activityrecognition.client.model.ModelDTO;
@@ -13,6 +14,7 @@ import org.activityrecognition.client.model.ModelEvent;
 import org.activityrecognition.client.model.ModelState;
 import org.activityrecognition.event.EventTrackerService;
 import org.activityrecognition.event.EventType;
+import org.activityrecognition.user.LoginActivity;
 
 import java.io.IOException;
 
@@ -48,11 +50,11 @@ public class MainActivity extends BaseActivity {
         collectUser1Button.setOnClickListener(v -> collectUser1Metrics());
         collectUser2Button.setOnClickListener(v -> collectUser2Metrics());
         predictButton.setOnClickListener(v -> startPrediction());
-        trainButton.setOnClickListener(v -> startTraining());
+        trainButton.setOnClickListener(v -> handleTraining());
         resetButton.setOnClickListener(v -> resetModel());
         logoutButton.setOnClickListener(v -> logout());
 
-        loadModelState();
+        loadModelStateAsync();
         if (session.getModelState() == null) {
             createModel();
         }
@@ -68,12 +70,17 @@ public class MainActivity extends BaseActivity {
     }
 
     @Override
+    public void onStop() {
+        super.onStop();
+    }
+
+    @Override
     public void onBackPressed() {
         moveTaskToBack(true);
     }
 
     private void createModel() {
-        disableActions();
+        disableControls();
         String modelName = session.getModelName();
         // launch a thread with the http call to the external service
         Call<ModelDTO> call = getModelClient().create(modelName);
@@ -106,32 +113,101 @@ public class MainActivity extends BaseActivity {
         sendModelTransition(ModelEvent.RESET);
     }
 
-    private void startTraining() {
+    //TriggerTrainingAsyncTaskRunner runner;
+
+    private void handleTraining() {
         if (isOffline()) {
             return;
         }
-        disableActions();
-        TriggerTrainingAsyncTaskRunner runner = new TriggerTrainingAsyncTaskRunner();
-        runner.execute();
+
+        disableControls();
+
+        if (session.getModelState() == ModelState.COLLECTED_2) {
+                getModelClient().pushEvent(session.getModelName(), ModelEvent.START_TRAINING.name())
+                    .enqueue(new Callback<EventResponseDTO>() {
+                        @Override
+                        public void onResponse(Call<EventResponseDTO> call, Response<EventResponseDTO> response) {
+                            if (response.isSuccessful()) {
+                                session.setModelState(ModelState.TRAINING);
+                                Log.e(TAG, response.message());
+                                pollUntilModelIsServing();
+                            } else {
+                                Log.e(TAG, "Unable to load model state!");
+                            }
+                        }
+                        @Override
+                        public void onFailure(Call<EventResponseDTO> call, Throwable t) {
+                            Log.e(TAG, "Unable to load model state. "+ t.getMessage());
+                            t.printStackTrace();
+                        }
+                    });
+        } else {
+            pollUntilModelIsServing();
+        }
+
+
+
+        //runner = new TriggerTrainingAsyncTaskRunner();
+        //runner.execute();
     }
+
+    private void pollUntilModelIsServing() {
+        Toast.makeText(getBaseContext(), "Aguarde por favor... esta tarea puede demorar varios minutos. Será notificado cuando finalice.", Toast.LENGTH_LONG).show();
+        waitUntilModelServing();
+    }
+
+    private void waitUntilModelServing() {
+        getModelClient().get(session.getModelName()).enqueue(new Callback<ModelDTO>() {
+            @Override
+            public void onResponse(Call<ModelDTO> call, Response<ModelDTO> response) {
+                if (response.isSuccessful()) {
+                    ModelState state = response.body().getState();
+                    if (state != null) {
+                        Log.i(TAG, String.format("Model state: %s", state));
+                        if (state != ModelState.SERVING) {
+                            try {
+                                Thread.sleep(5000);
+                                waitUntilModelServing();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            session.setModelState(state);
+                            Toast.makeText(getBaseContext(), "Entrenamiento finalizado!", Toast.LENGTH_LONG).show();
+                            updateView();
+                        }
+                    }
+                } else {
+                    Log.e(TAG, "Unable to load model state!");
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ModelDTO> call, Throwable t) {
+                Log.e(TAG, "Unable to load model state. "+ t.getMessage());
+                t.printStackTrace();
+            }
+        });
+    }
+
 
     private void collectUser1Metrics() {
         if (isOffline()) {
             return;
         }
-        disableActions();
+        disableControls();
         collectUserMetrics("1");
     }
     private void collectUser2Metrics() {
         if (isOffline()) {
             return;
         }
-        disableActions();
+        disableControls();
         collectUserMetrics("2");
     }
 
     private void collectUserMetrics(String id) {
-        disableActions();
+        disableControls();
         Intent intent = new Intent(getApplicationContext(), CollectActivity.class);
         intent.putExtra("USER_ID", id);
         intent.putExtra("COLLECTION_MAX_PACKS", COLLECTION_MAX_PACKS);
@@ -147,7 +223,7 @@ public class MainActivity extends BaseActivity {
     }
 
     @Override
-    protected void disableActions() {
+    protected void disableControls() {
         collectUser1Button.setEnabled(false);
         collectUser2Button.setEnabled(false);
         trainButton.setEnabled(false);
@@ -156,7 +232,7 @@ public class MainActivity extends BaseActivity {
 
     @Override
     protected void updateView() {
-        disableActions();
+        disableControls();
         ModelState modelState = session.getModelState();
 
         if (modelState == null) {
@@ -177,7 +253,7 @@ public class MainActivity extends BaseActivity {
                 break;
             case TRAINING:
             case READY_TO_SERVE:
-                startTraining();
+                handleTraining();
                 break;
             case SERVING:
                 predictButton.setEnabled(true);
@@ -185,7 +261,7 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-    // inner class to handle training waiting
+    // inner class to handle training and polling until finish
     private class TriggerTrainingAsyncTaskRunner extends AsyncTask<String, String, String> {
         ProgressDialog progressDialog;
 
@@ -194,9 +270,8 @@ public class MainActivity extends BaseActivity {
             String modelName = session.getModelName();
 
             try {
-                // launch a thread with the http call to the external service
+                // Only if model is in state COLLECTED_2, we send a event of type START_TRAINING
                 if (session.getModelState() == ModelState.COLLECTED_2) {
-                    session.setModelState(ModelState.TRAINING);
                     Call<EventResponseDTO> call = getModelClient().pushEvent(modelName, ModelEvent.START_TRAINING.name());
                     Response<EventResponseDTO> response = call.execute();
                     if (!response.isSuccessful()) {
@@ -204,31 +279,25 @@ public class MainActivity extends BaseActivity {
                         return "FAILURE";
                     } else {
                         Log.i(TAG, String.format("Event %s sent successfully!", ModelEvent.START_TRAINING.name()));
+                        session.setModelState(ModelState.TRAINING);
                     }
                 }
 
                 // start polling for training completion
-                Call<ModelDTO> callGet;
-                Response<ModelDTO> responseGet;
-                ModelState state = null;
-
                 int totalSleepSeconds = 0;
                 do {
                     if (isOffline()) {
                         return "ERROR";
                     }
-                    callGet = getModelClient().get(modelName);
-                    responseGet = callGet.execute();
-                    if (responseGet.isSuccessful()) {
-                        state = responseGet.body().getState();
-                    }
+
+                    // inside this method the state of model is loaded
+                    loadModelStateSync();
+
                     Thread.sleep(5 * 1000);
                     totalSleepSeconds += 5;
-                } while (state != ModelState.SERVING && totalSleepSeconds < 300);
+                } while (session.getModelState() != ModelState.SERVING && totalSleepSeconds < 300);
 
                 eventTrackerService.pushEvent(EventType.MODEL_TRAINED, String.format("Modelo %s entrenado exitosamente", modelName));
-
-                session.setModelState(ModelState.SERVING);
             } catch (IOException | InterruptedException e) {
                 Log.e(TAG, "Unable submit event. "+ e.getMessage());
                 e.printStackTrace();
@@ -238,7 +307,7 @@ public class MainActivity extends BaseActivity {
 
         @Override
         protected void onPostExecute(String result) {
-            Log.e(TAG, "Model state result: "+ result);
+            Log.i(TAG, "Model state result: "+ result);
             updateView();
             progressDialog.dismiss();
         }

@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
 
+import androidx.appcompat.app.AlertDialog;
+
 import org.activityrecognition.client.model.ModelClient;
 import org.activityrecognition.client.model.ModelClientFactory;
 import org.activityrecognition.client.model.PredictionInputDTO;
@@ -60,6 +62,10 @@ public class PredictActivity extends BaseActivity implements PacketListenerPredi
 
     @Override
     public void onPackageComplete(float[][][] input) {
+        if (isOffline()) {
+            interruptPrediction();
+        }
+
         PredictionInputDTO request = new PredictionInputDTO();
         request.setInput(input);
         Call<PredictionOutputDTO> call = getClient().predict(session.getModelName(), request);
@@ -111,12 +117,25 @@ public class PredictActivity extends BaseActivity implements PacketListenerPredi
     }
 
     @Override
-    protected void disableActions() {
+    protected void disableControls() {
 
     }
 
     @Override
     protected void updateView() {
 
+    }
+
+    private void interruptPrediction() {
+        sensorCollectorForPrediction.unregisterListener();
+        sensorCollectorForPrediction.stop();
+        AlertDialog alertDialog = new AlertDialog.Builder(PredictActivity.this).create();
+        alertDialog.setCanceledOnTouchOutside(false);
+        alertDialog.setMessage(getString(R.string.offline_error_msg));
+        alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "ACEPTAR",
+                (dialog, which) -> {
+                    PredictActivity.this.finish();
+                });
+        alertDialog.show();
     }
 }
