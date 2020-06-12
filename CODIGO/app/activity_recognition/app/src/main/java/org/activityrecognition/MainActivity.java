@@ -8,14 +8,11 @@ import android.util.Log;
 import android.widget.Button;
 
 import org.activityrecognition.client.model.EventResponseDTO;
-import org.activityrecognition.client.model.ModelClient;
-import org.activityrecognition.client.model.ModelClientFactory;
 import org.activityrecognition.client.model.ModelDTO;
 import org.activityrecognition.client.model.ModelEvent;
 import org.activityrecognition.client.model.ModelState;
 import org.activityrecognition.event.EventTrackerService;
 import org.activityrecognition.event.EventType;
-import org.activityrecognition.user.SessionManager;
 
 import java.io.IOException;
 
@@ -27,14 +24,12 @@ public class MainActivity extends BaseActivity {
     private static final int COLLECTION_MAX_PACKS = 10;
     private final String TAG = "ACTREC_MENU";
 
-    private SessionManager session;
     private Button collectUser1Button;
     private Button collectUser2Button;
     private Button trainButton;
     private Button predictButton;
     private Button resetButton;
     private Button logoutButton;
-    private ModelClient modelClient;
     private EventTrackerService eventTrackerService;
 
     @Override
@@ -42,9 +37,6 @@ public class MainActivity extends BaseActivity {
         Log.d(TAG, "performing onCreate()");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        session = new SessionManager(getApplicationContext());
-        session.checkLogin();
 
         collectUser1Button = findViewById(R.id.btn_collect_user_1);
         collectUser2Button = findViewById(R.id.btn_collect_user_2);
@@ -66,30 +58,6 @@ public class MainActivity extends BaseActivity {
         }
 
         eventTrackerService = new EventTrackerService(session);
-    }
-
-    private void loadModelState() {
-        getModelClient().get(session.getModelName()).enqueue(new Callback<ModelDTO>() {
-            @Override
-            public void onResponse(Call<ModelDTO> call, Response<ModelDTO> response) {
-                if (response.isSuccessful()) {
-                    ModelState state = response.body().getState();
-                    if (state != null) {
-                        Log.i(TAG, String.format("Loaded model state: %s", state));
-                        session.setModelState(state);
-                        updateView();
-                    }
-                } else {
-                    Log.e(TAG, "Unable to load model state!");
-                }
-            }
-
-            @Override
-            public void onFailure(Call<ModelDTO> call, Throwable t) {
-                Log.e(TAG, "Unable to load model state. "+ t.getMessage());
-                t.printStackTrace();
-            }
-        });
     }
 
     @Override
@@ -135,28 +103,7 @@ public class MainActivity extends BaseActivity {
     }
 
     private void resetModel() {
-        disableActions();
-        // launch a thread with the http call to the external service
-        Call<EventResponseDTO> call = getModelClient().pushEvent(session.getModelName(), ModelEvent.RESET.name());
-        call.enqueue(new Callback<EventResponseDTO>() {
-            @Override
-            public void onResponse(Call<EventResponseDTO> call, Response<EventResponseDTO> response) {
-                if (response.isSuccessful()) {
-                    Log.i(TAG, "Model reset successfully!");
-                    session.setModelState(ModelState.NEW);
-                } else {
-                    Log.e(TAG, response.message());
-                }
-                updateView();
-            }
-
-            @Override
-            public void onFailure(Call<EventResponseDTO> call, Throwable t) {
-                Log.e(TAG, "Unable to submit post to API. "+ t.getMessage());
-                t.printStackTrace();
-                updateView();
-            }
-        });
+        sendModelTransition(ModelEvent.RESET);
     }
 
     private void startTraining() {
@@ -199,14 +146,16 @@ public class MainActivity extends BaseActivity {
         startActivity(intent);
     }
 
-    private void disableActions() {
+    @Override
+    protected void disableActions() {
         collectUser1Button.setEnabled(false);
         collectUser2Button.setEnabled(false);
         trainButton.setEnabled(false);
         predictButton.setEnabled(false);
     }
 
-    private void updateView() {
+    @Override
+    protected void updateView() {
         disableActions();
         ModelState modelState = session.getModelState();
 
@@ -227,19 +176,13 @@ public class MainActivity extends BaseActivity {
                 trainButton.setEnabled(true);
                 break;
             case TRAINING:
+            case READY_TO_SERVE:
                 startTraining();
                 break;
             case SERVING:
                 predictButton.setEnabled(true);
                 break;
         }
-    }
-
-    private ModelClient getModelClient() {
-        if (modelClient == null) {
-            modelClient = ModelClientFactory.getClient();
-        }
-        return modelClient;
     }
 
     // inner class to handle training waiting
@@ -252,7 +195,7 @@ public class MainActivity extends BaseActivity {
 
             try {
                 // launch a thread with the http call to the external service
-                if (session.getModelState() != ModelState.TRAINING) {
+                if (session.getModelState() == ModelState.COLLECTED_2) {
                     session.setModelState(ModelState.TRAINING);
                     Call<EventResponseDTO> call = getModelClient().pushEvent(modelName, ModelEvent.START_TRAINING.name());
                     Response<EventResponseDTO> response = call.execute();

@@ -5,8 +5,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import org.activityrecognition.client.model.ModelClient;
 import org.activityrecognition.client.model.ModelClientFactory;
 import org.activityrecognition.client.model.PredictionInputDTO;
@@ -19,7 +17,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class PredictActivity extends AppCompatActivity implements PacketListenerPredict {
+public class PredictActivity extends BaseActivity implements PacketListenerPredict {
     private final String TAG = "ACTREC_PREDICTION";
     private ModelClient modelClient;
     private SessionManager session;
@@ -99,18 +97,26 @@ public class PredictActivity extends AppCompatActivity implements PacketListener
     }
 
     @Override
-    protected void onPause() {
+    public void onPause() {
         super.onPause();
         sensorCollectorForPrediction.stop();
         sensorCollectorForPrediction.unregisterListener();
     }
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         super.onResume();
         sensorCollectorForPrediction.start();
         sensorCollectorForPrediction.registerListener(this);
     }
 
+    @Override
+    protected void disableActions() {
 
+    }
+
+    @Override
+    protected void updateView() {
+
+    }
 }

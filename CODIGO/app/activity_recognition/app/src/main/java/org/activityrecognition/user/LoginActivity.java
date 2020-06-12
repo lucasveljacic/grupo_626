@@ -62,6 +62,16 @@ public class LoginActivity extends BaseActivity {
     }
 
     @Override
+    protected void disableActions() {
+
+    }
+
+    @Override
+    protected void updateView() {
+
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
         signUpLink.setEnabled(true);

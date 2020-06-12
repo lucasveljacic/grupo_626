@@ -212,4 +212,15 @@ public class SignUpActivity extends BaseActivity {
 
         return valid;
     }
+
+    @Override
+    protected void disableActions() {
+
+    }
+
+    @Override
+    protected void updateView() {
+
+    }
+
 }

@@ -9,7 +9,7 @@ import androidx.appcompat.app.AlertDialog;
 
 import org.activityrecognition.client.model.MeasureRequest;
 import org.activityrecognition.client.model.ModelClient;
-import org.activityrecognition.client.model.ModelClientFactory;
+import org.activityrecognition.client.model.ModelEvent;
 import org.activityrecognition.client.model.ModelState;
 import org.activityrecognition.measure.PacketListenerTrain;
 import org.activityrecognition.measure.SensorCollectorForTrain;
@@ -49,6 +49,16 @@ public class CollectActivity extends BaseActivity implements PacketListenerTrain
         sensorPacketCollector = new SensorCollectorForTrain(sensorManager);
     }
 
+    @Override
+    protected void disableActions() {
+
+    }
+
+    @Override
+    protected void updateView() {
+
+    }
+
     private void showExplanationDialog() {
         AlertDialog alertDialog = new AlertDialog.Builder(CollectActivity.this).create();
         alertDialog.setCanceledOnTouchOutside(false);
@@ -60,13 +70,6 @@ public class CollectActivity extends BaseActivity implements PacketListenerTrain
                     dialog.dismiss();
                 });
         alertDialog.show();
-    }
-
-    ModelClient getModelClient() {
-        if (modelClient == null) {
-            modelClient = ModelClientFactory.getClient();
-        }
-        return modelClient;
     }
 
     private void updateDataPackets() {
@@ -112,9 +115,9 @@ public class CollectActivity extends BaseActivity implements PacketListenerTrain
         sensorPacketCollector.unregisterListener();
         session.setSentDataPackets(0);
         if (userId.equals("1")) {
-            session.setModelState(ModelState.COLLECTED_1);
+            sendModelTransition(ModelEvent.END_COLLECT_1);
         } else {
-            session.setModelState(ModelState.COLLECTED_2);
+            sendModelTransition(ModelEvent.END_COLLECT_2);
         }
 
         AlertDialog alertDialog = new AlertDialog.Builder(CollectActivity.this).create();
