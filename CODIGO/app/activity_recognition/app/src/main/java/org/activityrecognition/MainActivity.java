@@ -23,7 +23,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class MainActivity extends BaseActivity {
-    private static final int COLLECTION_MAX_PACKS = 60;
+    private static final int COLLECTION_MAX_PACKS = 10;
     private final String TAG = "ACTREC_MENU";
 
     private Button collectUser1Button;

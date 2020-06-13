@@ -1,27 +1,30 @@
 # Activity Recognition APP
 
-El presente repo contiene el código fuente de un servicio web, scripts python y una mobile application 
-que son parte de un sistema cuyo proposito principal es el de reconocer la actividad de los usuarios 
+El presente repo contiene el código fuente de un servicio web, scripts python y una mobile applicatión 
+que son parte de un sistema cuyo propósito principal es el de reconocer la actividad de los usuarios 
 utilizando Machine Learning y datos de métricas recolectadas de los sensores de un dispositivo mobil.
 
 
 ## CHANGELOG
 **Version: v0.2**
-* Fix en entrenamiento del modelo dentro de la APP en caso de change orientation.
-* Manejo de desconexion a Internet en todos los Activities de la APP. 
-* Mejora de este README con mas informacion como la estructura del proyecto.
-* Se agrego un contador de paquetes enviados en la activity de recollection de datos.
-* Se agrego un [proyecto Postman](/DOC/model_service.postman_collection.json) con los endpoint del Model Service para dar mayor visibilidad de debuging.
+* Fix en entrenamiento del modelo dentro de la APP en caso de change orientatión.
+* Manejo de desconexión a Internet en todos los Activities de la APP. 
+* Mejora de este README con más información como la estructura del proyecto, etc.
+* Se agrego un contador de paquetes enviados en la activity de recollectión de datos.
+* Se agrego un [proyecto Postman](/DOC/model_service.postman_collection.json) con los endpoint del 
+Model Service para dar mayor visibilidad de debuging.
 
 
 ## Estructura del proyecto
 El proyecto incluyó el desarrollo de 3 módulos:
-* **Model Serivice**. Servicio REST desarrollado en java con Spring Boot Framework. Deployado en AWS en una micro instancia.
+* **Model Service**. Servicio REST desarrollado en java con Spring Boot Framework. Deployado en AWS en una micro instancia.
 * **Activity Recognition APP**. Una aplicacion Android.
-* **ML Model**. Una jupyter notebook usada para el tuning del modelo. Un python script rain.py usado por el Model Service para entrenar el modelo.
+* **ML Model**. Una jupyter notebook usada para el desarrollo y tuning del modelo. 
+Un python script *rain.py* usado por el Model Service para entrenar el modelo.
 * **Tensorflow Serving**. Servicio de terceros. Ver en sección Detalle de Modulos. https://www.tensorflow.org/tfx/guide/serving
 
-Todos se encuentran dentro del directorio CODIGO con la siguiente estructura.
+
+Todos los modulos desarrollados encuentran dentro del directorio CODIGO con la siguiente estructura.
 
     ├── CODIGO
     │   ├── activity-recognition-service          ------------------------> (Model Service)
@@ -50,7 +53,8 @@ Todos se encuentran dentro del directorio CODIGO con la siguiente estructura.
     │   └── app-release-unsigned.apk
     └── README.md
 
-El proyecto Android se encuentra en el path CODIGO/app/activity_recognition. Ese es el directorio que se debe importar en Android Studio para compilar y debuguear el proyecto.
+El proyecto Android se encuentra en el path **CODIGO/app/activity_recognition**. 
+**Ese es el directorio que se debe importar en Android Studio para compilar y debuguear el proyecto.**
 
 
 ## Arquitectura
