@@ -4,6 +4,55 @@ El presente repo contiene el código fuente de un servicio web, scripts python y
 que son parte de un sistema cuyo proposito principal es el de reconocer la actividad de los usuarios 
 utilizando Machine Learning y datos de métricas recolectadas de los sensores de un dispositivo mobil.
 
+
+## CHANGELOG
+**Version: v0.2**
+* Fix en entrenamiento del modelo dentro de la APP en caso de change orientation.
+* Manejo de desconexion a Internet en todos los Activities de la APP. 
+* Mejora de este README con mas informacion como la estructura del proyecto.
+* Se agrego un contador de paquetes enviados en la activity de recollection de datos.
+* Se agrego un [proyecto Postman](/DOC/model_service.postman_collection.json) con los endpoint del Model Service para dar mayor visibilidad de debuging.
+
+
+## Estructura del proyecto
+El proyecto incluyó el desarrollo de 3 módulos:
+* **Model Serivice**. Servicio REST desarrollado en java con Spring Boot Framework. Deployado en AWS en una micro instancia.
+* **Activity Recognition APP**. Una aplicacion Android.
+* **ML Model**. Una jupyter notebook usada para el tuning del modelo. Un python script rain.py usado por el Model Service para entrenar el modelo.
+* **Tensorflow Serving**. Servicio de terceros. Ver en sección Detalle de Modulos. https://www.tensorflow.org/tfx/guide/serving
+
+Todos se encuentran dentro del directorio CODIGO con la siguiente estructura.
+
+    ├── CODIGO
+    │   ├── activity-recognition-service          ------------------------> (Model Service)
+    │   ├── app
+    │   │   └── activity_recognition              ------------------------> (Aplicación de Android)
+    │   │       ├── activity_recognition.iml
+    │   │       ├── app
+    │   │       │   ├── app.iml
+    │   │       │   ├── build
+    │   │       │   ├── ...
+    │   │       │   ├── README.md
+    │   │       │   └── src
+    │   │       ├── build
+    │   │       ├── build.gradle
+    │   │       ├── ...
+    │   │       ├── local.properties
+    │   │       ├── mobile-activity_recognition.iml
+    │   │       └── settings.gradle
+    │   └── models                                ------------------------> (los modelos de ML)
+    │       ├── modeling.ipynb
+    │       ├── run.sh
+    │       ├── train.py
+    ├── DOC                                       ------------------------> (contiene diagramas e imágenes de documentación)
+    ├── EJECUTABLE                                ------------------------> (los binarios de la aplicación de android)
+    │   ├── app-debug.apk
+    │   └── app-release-unsigned.apk
+    └── README.md
+
+El proyecto Android se encuentra en el path CODIGO/app/activity_recognition. Ese es el directorio que se debe importar en Android Studio para compilar y debuguear el proyecto.
+
+
 ## Arquitectura
 
 <img alt="Architecture Diagram" style="align:center" src="DOC/activity-recgnition-architecture.png" />
@@ -20,6 +69,8 @@ Servicio provisto por La Catedra de SOA. Se compone de un API REST con los servi
 Servicio REST que permite crear, entrenar, resetear (usado para reentrenar) y eliminar modelos así como también expone un endpoint para realizar las inferencias.
 Se encuentra desarrollado en Java usando Spring Boot.
 Se encuentra desplegado en AWS.
+[proyecto Postman](/DOC/model_service.postman_collection.json) con endpoints publicados por este servicio.
+
 
 #### Scripts Python
 Utilizados para entrenar el modelo y en la etapas previas de modeling y tuning del mismo. 
@@ -71,6 +122,15 @@ enviando paquetes de 50x12 una vez cada segundo.
 <td><img alt="Data Collection" src="DOC/data-collection.jpeg" width="200"></td>
 <td><img alt="Inference" src="DOC/inference.jpeg" width="200"></td>
 </tr></table>
+
+
+### Eventos
+La app envía eventos a un servidor externo provisto por UNLaM en los siguientes casos:
+* LOGIN. Cada vez que un usuario hace un nuevo login a la APP.
+* REGISTER. Cada vez que un usuario se registra en la APP.
+* MODEL_CREATED. Al crear un nuevo modelo. El modelo se crea con nombre igual al email, reemplazando los caracteres especiales (@, etc) por guiones bajos. 
+* MODEL_TRAINED. Al finalizar el entrenamiento del modelo.
+
 
 
 ## Características del Modelo usado
