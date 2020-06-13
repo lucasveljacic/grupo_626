@@ -38,5 +38,5 @@
     <string name="data_packets">Data Packets: %d</string>
     <string name="offline_error_msg">Sin conexión a Internet. Inténtelo de nuevo más tarde.</string>
     <string name="end_of_data_collection_msg">Fin de la captura de datos</string>
-    <string name="accept_btn_msg">ACEPTAR</string>
+    <string name="accept_btn_msg">COMENZAR</string>
 </resources>

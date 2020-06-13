@@ -1,4 +1,4 @@
-package org.activityrecognition.measure;
+package org.activityrecognition.core;
 
 import android.annotation.SuppressLint;
 import android.hardware.Sensor;

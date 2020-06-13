@@ -1,4 +1,4 @@
-package org.activityrecognition;
+package org.activityrecognition.core;
 
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
@@ -14,6 +14,7 @@ import org.activityrecognition.client.model.ModelClientFactory;
 import org.activityrecognition.client.model.ModelDTO;
 import org.activityrecognition.client.model.ModelEvent;
 import org.activityrecognition.client.model.ModelState;
+import org.activityrecognition.core.NetworkChangeReceiver;
 import org.activityrecognition.user.SessionManager;
 
 import java.io.IOException;
@@ -36,8 +37,7 @@ public abstract class BaseActivity extends AppCompatActivity {
 
         Log.d(TAG, "performing onCreate()");
 
-        session = new SessionManager(getApplicationContext());
-        session.checkLogin();
+        session = SessionManager.getInstance(getApplicationContext());
 
         mNetworkReceiver = new NetworkChangeReceiver();
         registerReceiver(mNetworkReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));

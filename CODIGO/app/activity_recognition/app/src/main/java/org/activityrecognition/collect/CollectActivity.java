@@ -1,4 +1,4 @@
-package org.activityrecognition;
+package org.activityrecognition.collect;
 
 import android.hardware.SensorManager;
 import android.os.Bundle;
@@ -7,11 +7,13 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 
+import org.activityrecognition.R;
 import org.activityrecognition.client.model.MeasureRequest;
 import org.activityrecognition.client.model.ModelEvent;
 import org.activityrecognition.client.model.ModelState;
-import org.activityrecognition.measure.PacketListenerTrain;
-import org.activityrecognition.measure.SensorCollectorForTrain;
+import org.activityrecognition.core.BaseActivity;
+import org.activityrecognition.core.PacketListenerTrain;
+import org.activityrecognition.core.SensorCollectorForTrain;
 import org.activityrecognition.user.SessionManager;
 
 import java.util.List;
@@ -43,7 +45,6 @@ public class CollectActivity extends BaseActivity implements PacketListenerTrain
         COLLECTION_MAX_PACKS = getIntent().getIntExtra("COLLECTION_MAX_PACKS", 60);
         userId = getIntent().getStringExtra("USER_ID");
 
-        session = new SessionManager(getApplicationContext());
         session.checkLogin();
 
         SensorManager sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);

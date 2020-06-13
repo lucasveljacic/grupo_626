@@ -9,15 +9,15 @@ import android.widget.Toast;
 
 import com.google.android.material.textfield.TextInputLayout;
 
-import org.activityrecognition.BaseActivity;
+import org.activityrecognition.core.BaseActivity;
 import org.activityrecognition.MainActivity;
 import org.activityrecognition.R;
 import org.activityrecognition.client.auth.AuthClient;
 import org.activityrecognition.client.auth.AuthClientFactory;
 import org.activityrecognition.client.auth.SignUpDTO;
 import org.activityrecognition.client.auth.AuthResponse;
-import org.activityrecognition.event.EventTrackerService;
-import org.activityrecognition.event.EventType;
+import org.activityrecognition.core.event.EventTrackerService;
+import org.activityrecognition.core.event.EventType;
 
 import java.util.Objects;
 
@@ -37,7 +37,6 @@ public class SignUpActivity extends BaseActivity {
     private TextInputLayout inputPassword;
     private TextInputLayout inputPasswordRepeat;
     private Button signUpButton;
-    private SessionManager session;
     private EventTrackerService eventTrackerService;
 
     @Override
@@ -56,7 +55,6 @@ public class SignUpActivity extends BaseActivity {
         signUpButton.setOnClickListener(v -> signUp());
 
         client = AuthClientFactory.getClient();
-        session = new SessionManager(getApplicationContext());
 
         eventTrackerService = new EventTrackerService(session);
     }

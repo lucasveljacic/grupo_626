@@ -1,4 +1,4 @@
-package org.activityrecognition.measure;
+package org.activityrecognition.core;
 
 public interface PacketListenerPredict {
     void onPackageComplete(float[][][] inputPrediction);

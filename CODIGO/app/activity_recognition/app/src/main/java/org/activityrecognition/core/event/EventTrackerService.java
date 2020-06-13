@@ -1,4 +1,4 @@
-package org.activityrecognition.event;
+package org.activityrecognition.core.event;
 
 import android.util.Log;
 

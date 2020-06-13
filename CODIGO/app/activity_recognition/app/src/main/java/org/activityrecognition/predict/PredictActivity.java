@@ -1,4 +1,4 @@
-package org.activityrecognition;
+package org.activityrecognition.predict;
 
 import android.hardware.SensorManager;
 import android.os.Bundle;
@@ -7,12 +7,14 @@ import android.widget.Button;
 
 import androidx.appcompat.app.AlertDialog;
 
+import org.activityrecognition.R;
 import org.activityrecognition.client.model.ModelClient;
 import org.activityrecognition.client.model.ModelClientFactory;
 import org.activityrecognition.client.model.PredictionInputDTO;
 import org.activityrecognition.client.model.PredictionOutputDTO;
-import org.activityrecognition.measure.PacketListenerPredict;
-import org.activityrecognition.measure.SensorCollectorForPrediction;
+import org.activityrecognition.core.BaseActivity;
+import org.activityrecognition.core.PacketListenerPredict;
+import org.activityrecognition.core.SensorCollectorForPrediction;
 import org.activityrecognition.user.SessionManager;
 
 import retrofit2.Call;
@@ -22,7 +24,6 @@ import retrofit2.Response;
 public class PredictActivity extends BaseActivity implements PacketListenerPredict {
     private final String TAG = "ACTREC_PREDICTION";
     private ModelClient modelClient;
-    private SessionManager session;
     private Button closeButton;
     private Button predictionButton;
     private SensorCollectorForPrediction sensorCollectorForPrediction;
@@ -32,7 +33,6 @@ public class PredictActivity extends BaseActivity implements PacketListenerPredi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_predict);
 
-        session = new SessionManager(getApplicationContext());
         session.checkLogin();
 
         predictionButton = findViewById(R.id.btn_prediction);

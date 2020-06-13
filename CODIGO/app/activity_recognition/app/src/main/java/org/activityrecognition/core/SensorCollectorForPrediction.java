@@ -1,15 +1,10 @@
-package org.activityrecognition.measure;
+package org.activityrecognition.core;
 
 import android.annotation.SuppressLint;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-
-import org.activityrecognition.PredictActivity;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class SensorCollectorForPrediction implements SensorEventListener {
     private final int PACKET_SIZE = 50;

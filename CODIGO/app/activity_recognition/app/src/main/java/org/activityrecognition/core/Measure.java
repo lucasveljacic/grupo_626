@@ -1,4 +1,4 @@
-package org.activityrecognition.measure;
+package org.activityrecognition.core;
 
 public class Measure {
     private float[] values = new float[3];

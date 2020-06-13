@@ -1,4 +1,4 @@
-package org.activityrecognition;
+package org.activityrecognition.core;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -6,7 +6,7 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
-class NetworkChangeReceiver extends BroadcastReceiver {
+public class NetworkChangeReceiver extends BroadcastReceiver {
 
     private boolean isOnline = true;
 

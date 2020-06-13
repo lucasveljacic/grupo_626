@@ -10,15 +10,15 @@ import android.widget.Toast;
 
 import com.google.android.material.textfield.TextInputLayout;
 
-import org.activityrecognition.BaseActivity;
+import org.activityrecognition.core.BaseActivity;
 import org.activityrecognition.MainActivity;
 import org.activityrecognition.R;
 import org.activityrecognition.client.auth.AuthClient;
 import org.activityrecognition.client.auth.AuthClientFactory;
 import org.activityrecognition.client.auth.AuthResponse;
 import org.activityrecognition.client.auth.LoginDTO;
-import org.activityrecognition.event.EventTrackerService;
-import org.activityrecognition.event.EventType;
+import org.activityrecognition.core.event.EventTrackerService;
+import org.activityrecognition.core.event.EventType;
 
 import java.util.Objects;
 
@@ -35,7 +35,6 @@ public class LoginActivity extends BaseActivity {
     private TextInputLayout inputPassword;
     private Button loginButton;
     private TextView signUpLink;
-    private SessionManager session;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -43,7 +42,6 @@ public class LoginActivity extends BaseActivity {
         setContentView(R.layout.activity_login);
 
         userClient = AuthClientFactory.getClient();
-        session = new SessionManager(getApplicationContext());
 
         inputEmail = findViewById(R.id.input_email);
         inputPassword = findViewById(R.id.input_password);

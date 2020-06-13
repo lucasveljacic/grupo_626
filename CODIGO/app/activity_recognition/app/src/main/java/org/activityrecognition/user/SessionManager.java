@@ -10,6 +10,7 @@ import org.activityrecognition.client.model.ModelState;
 import java.util.HashMap;
 
 public class SessionManager {
+    private static SessionManager instance;
     private SharedPreferences pref;
     private Editor editor;
     private Context context;
@@ -22,7 +23,14 @@ public class SessionManager {
     public static final String KEY_MODEL_STATE = "modelState";
     private static final String KEY_SENT_DATA_PACKETS = "sentDataPackets";
 
-    public SessionManager(Context context){
+    public static SessionManager getInstance(Context context) {
+        if (instance == null) {
+            instance = new SessionManager(context);
+        }
+        return instance;
+    }
+
+    private SessionManager(Context context) {
         this.context = context;
         pref = this.context.getSharedPreferences(PREF_NAME, PRIVATE_MODE);
         editor = pref.edit();

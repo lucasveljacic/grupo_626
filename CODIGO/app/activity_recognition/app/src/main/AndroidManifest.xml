@@ -19,10 +19,10 @@
             </intent-filter>
         </receiver>
         <activity
-            android:name="org.activityrecognition.PredictActivity"
+            android:name="org.activityrecognition.predict.PredictActivity"
             android:label="@string/title_activity_predict" />
         <activity
-            android:name="org.activityrecognition.CollectActivity"
+            android:name="org.activityrecognition.collect.CollectActivity"
             android:label="@string/title_activity_collect" />
         <activity
             android:name="org.activityrecognition.user.LoginActivity"
