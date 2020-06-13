@@ -29,9 +29,9 @@ public class ModelService {
     }
     public Model create(Model model) {
         // checking if model is in serving state already
-        if (isBeenServed(model)) {
-            model.setState(ModelState.SERVING);
-        }
+        //if (isBeenServed(model)) {
+        //    model.setState(ModelState.SERVING);
+        //}
 
         // create directory structure
         File trainingPath = new File(String.format("%s/%s/train", MODELS_PATH, model.getName()));
@@ -61,35 +61,36 @@ public class ModelService {
         return prediction[0][0];
     }
 
-    public void handleEvent(Model model, ModelEvent eventId) throws IOException {
+    public Model handleEvent(Model model, ModelEvent eventId) throws IOException {
         switch (eventId) {
             case END_COLLECT_1:
                 model.setState(ModelState.COLLECTED_1);
-                repository.save(model);
+                model = repository.save(model);
                 break;
             case END_COLLECT_2:
                 model.setState(ModelState.COLLECTED_2);
-                repository.save(model);
+                model = repository.save(model);
                 break;
             case START_TRAINING:
-                trainModel(model);
+                model = trainModel(model);
                 break;
             case RESET:
                 delete(model);
-                create(model);
+                model = create(model);
                 break;
         }
+        return model;
     }
 
-    private void trainModel(Model model) {
+    private Model trainModel(Model model) {
         model.setState(ModelState.TRAINING);
-        repository.save(model);
+        Model savedModel = repository.save(model);
 
         new Thread(() -> {
             ProcessBuilder pb = new ProcessBuilder(
                     "bash",
                     "run.sh",
-                    String.format("--basepath %s/%s", MODELS_PATH, model.getName()));
+                    String.format("--basepath %s/%s", MODELS_PATH, savedModel.getName()));
 
             pb.directory(new File(SCRIPTS_PATH));
             pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
@@ -98,12 +99,13 @@ public class ModelService {
             try {
                 Process p = pb.start();
                 p.waitFor(5, TimeUnit.MINUTES);
-                serveModel(model);
+                serveModel(savedModel);
 
             } catch (IOException | InterruptedException | TimeoutException e) {
                 e.printStackTrace();
             }
         }).start();
+        return savedModel;
     }
 
     private void serveModel(Model model) throws IOException, TimeoutException, InterruptedException {
@@ -115,7 +117,7 @@ public class ModelService {
 
         int totalSleepSeconds = 0;
         while (!isBeenServed(model)) {
-            if (totalSleepSeconds >= 60) {
+            if (totalSleepSeconds >= 120) {
                 throw new TimeoutException("Task execution timed out!");
             }
             Thread.sleep(5 * 1000);

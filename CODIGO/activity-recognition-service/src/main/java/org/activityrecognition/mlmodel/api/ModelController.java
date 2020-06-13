@@ -91,7 +91,7 @@ public class ModelController {
                     new EventResponseDTO(String.format("Event %s not supported", eventId), entityToDTO(model)),
                     HttpStatus.BAD_REQUEST);
         }
-        service.handleEvent(model, modelEvent);
+        model = service.handleEvent(model, modelEvent);
         return new ResponseEntity<>(new EventResponseDTO("Event handled Ok", entityToDTO(model)), HttpStatus.OK);
     }
 
