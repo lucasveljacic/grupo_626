@@ -5,6 +5,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.util.Log;
 
 import org.activityrecognition.core.MeasureGroup;
 
@@ -12,6 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SensorCollectorForCollect implements SensorEventListener {
+    private final String TAG = "ACTREC_SERVICE_FOR_COLLECT";
+
     private final int PACKET_SIZE = 50;
     private final int SAMPLE_RATE_MILLIS = 20;
     private SensorManager sensorManager;
@@ -69,6 +72,7 @@ public class SensorCollectorForCollect implements SensorEventListener {
             // check if we should send the packet
             if (packet.size() == PACKET_SIZE) {
                 notifyListener(packet);
+                Log.d(TAG, "Collected packet: " + packet);
                 packet = new ArrayList<>();
             }
         }

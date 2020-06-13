@@ -4,19 +4,17 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
+import org.activityrecognition.core.event.EventTrackerService;
+import org.activityrecognition.core.event.EventType;
 import org.activityrecognition.external.client.model.ModelDTO;
 import org.activityrecognition.external.client.model.ModelEvent;
 import org.activityrecognition.external.client.model.ModelState;
 import org.activityrecognition.ui.collect.CollectActivity;
-import org.activityrecognition.core.event.EventTrackerService;
-import org.activityrecognition.core.event.EventType;
 import org.activityrecognition.ui.predict.PredictActivity;
 import org.activityrecognition.ui.train.ModelTrainerViewModel;
 
@@ -37,7 +35,6 @@ public class MainActivity extends BaseActivity {
     private EventTrackerService eventTrackerService;
 
     private ModelTrainerViewModel trainingViewModel;
-    private TextView txtTrainStatus;
 
     ProgressDialog trainingProgressDialog;
 
@@ -57,7 +54,6 @@ public class MainActivity extends BaseActivity {
         logoutButton = findViewById(R.id.btn_loguot);
         trainButton = findViewById(R.id.btn_train);
         predictButton = findViewById(R.id.btn_predict);
-        txtTrainStatus = findViewById(R.id.txt_train_status);
 
         collectUser1Button.setOnClickListener(v -> collectUser1Metrics());
         collectUser2Button.setOnClickListener(v -> collectUser2Metrics());
@@ -66,11 +62,6 @@ public class MainActivity extends BaseActivity {
         resetButton.setOnClickListener(v -> resetModel());
         logoutButton.setOnClickListener(v -> logout());
 
-        loadModelStateAsync();
-        if (session.getModelState() == null) {
-            createModel();
-        }
-
         eventTrackerService = new EventTrackerService(session);
 
         ModelTrainerViewModel.Factory factory = new ModelTrainerViewModel.Factory(session, eventTrackerService, getModelClient());
@@ -78,6 +69,35 @@ public class MainActivity extends BaseActivity {
                 .get(ModelTrainerViewModel.class);
 
         observeElapsedTime();
+
+        // this must go at last as it needs view objects to be loaded
+        refreshModelState();
+    }
+
+    protected void refreshModelState() {
+        getModelClient().get(session.getModelName()).enqueue(new Callback<ModelDTO>() {
+            @Override
+            public void onResponse(Call<ModelDTO> call, Response<ModelDTO> response) {
+                if (response.isSuccessful()) {
+                    ModelState state = response.body().getState();
+                    if (state != null) {
+                        Log.i(TAG, String.format("Loaded model state: %s", state));
+                        session.setModelState(state);
+                        updateView();
+                    }
+                } else if (response.code() == 404) {
+                    createModel();
+                } else {
+                    Log.e(TAG, String.format("Unable to load model state! Response code: %d", response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ModelDTO> call, Throwable t) {
+                Log.e(TAG, "Unable to load model state. "+ t.getMessage());
+                t.printStackTrace();
+            }
+        });
     }
 
     private void observeElapsedTime() {
@@ -199,7 +219,6 @@ public class MainActivity extends BaseActivity {
         collectUser2Button.setEnabled(false);
         trainButton.setEnabled(false);
         predictButton.setEnabled(false);
-        txtTrainStatus.setVisibility(View.GONE);
     }
 
     @Override

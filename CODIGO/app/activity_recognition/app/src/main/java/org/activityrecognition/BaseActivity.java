@@ -8,16 +8,12 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import org.activityrecognition.core.NetworkChangeReceiver;
 import org.activityrecognition.external.client.model.EventResponseDTO;
 import org.activityrecognition.external.client.model.ModelClient;
 import org.activityrecognition.external.client.model.ModelClientFactory;
-import org.activityrecognition.external.client.model.ModelDTO;
 import org.activityrecognition.external.client.model.ModelEvent;
-import org.activityrecognition.external.client.model.ModelState;
-import org.activityrecognition.core.NetworkChangeReceiver;
 import org.activityrecognition.ui.user.SessionManager;
-
-import java.io.IOException;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -61,9 +57,6 @@ public abstract class BaseActivity extends AppCompatActivity {
         return !mNetworkReceiver.isOnline();
     }
 
-    protected abstract void disableControls();
-    protected abstract void updateView();
-
     protected ModelClient getModelClient() {
         if (modelClient == null) {
             modelClient = ModelClientFactory.getClient();
@@ -97,45 +90,6 @@ public abstract class BaseActivity extends AppCompatActivity {
                 });
     }
 
-    protected void loadModelStateAsync() {
-        getModelClient().get(session.getModelName()).enqueue(new Callback<ModelDTO>() {
-            @Override
-            public void onResponse(Call<ModelDTO> call, Response<ModelDTO> response) {
-                if (response.isSuccessful()) {
-                    ModelState state = response.body().getState();
-                    if (state != null) {
-                        Log.i(TAG, String.format("Loaded model state: %s", state));
-                        session.setModelState(state);
-                        updateView();
-                    }
-                } else {
-                    Log.e(TAG, "Unable to load model state!");
-                }
-            }
-
-            @Override
-            public void onFailure(Call<ModelDTO> call, Throwable t) {
-                Log.e(TAG, "Unable to load model state. "+ t.getMessage());
-                t.printStackTrace();
-            }
-        });
-    }
-
-    protected void loadModelStateSync() {
-        try {
-            Response<ModelDTO> response = getModelClient().get(session.getModelName()).execute();
-            if (response.isSuccessful()) {
-                ModelState state = response.body().getState();
-                if (state != null) {
-                    Log.i(TAG, String.format("Loaded model state: %s", state));
-                    session.setModelState(state);
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     @Override
     public void onStart() {
         super.onStart();
@@ -165,4 +119,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         super.onStop();
         Log.d(TAG, "performing onStop()");
     }
+
+    protected abstract void disableControls();
+    protected abstract void updateView();
 }

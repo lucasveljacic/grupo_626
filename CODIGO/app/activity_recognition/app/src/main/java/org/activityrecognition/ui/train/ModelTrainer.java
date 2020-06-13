@@ -146,11 +146,11 @@ public class ModelTrainer {
 
         Integer threshold = 100;
         if (session.getModelState() == ModelState.TRAINING) {
-            threshold = 50;
+            threshold = 60;
         } else if (session.getModelState() == ModelState.READY_TO_SERVE) {
             threshold = 100;
         }
 
-        progressPercentage = progressPercentage + (threshold - progressPercentage) / 3;
+        progressPercentage = progressPercentage + (threshold - progressPercentage) / 4;
     }
 }
