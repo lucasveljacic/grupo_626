@@ -22,19 +22,19 @@ public class MeasureGroup {
             Sensor.TYPE_GRAVITY,
             Sensor.TYPE_ROTATION_VECTOR);
 
-    MeasureGroup() {
+    public MeasureGroup() {
         measures = new HashMap<>();
         sensorTypes.forEach(type -> measures.put(type, new Measure()));
         sensorsCollectedSet = new HashSet<>();
     }
 
-    void addMeasure(Long timestamp, int sensorType, float[] values) {
+    public void addMeasure(Long timestamp, int sensorType, float[] values) {
         this.timestamp = timestamp;
         measures.get(sensorType).addValues(values);
         sensorsCollectedSet.add(sensorType);
     }
 
-    boolean ready() {
+    public boolean ready() {
         if (!ready) {
             ready = sensorsCollectedSet.size() == sensorTypes.size();
         }

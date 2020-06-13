@@ -2,11 +2,11 @@ package org.activityrecognition.core.event;
 
 import android.util.Log;
 
-import org.activityrecognition.client.eventtracker.EventDTO;
-import org.activityrecognition.client.eventtracker.EventTrackerClient;
-import org.activityrecognition.client.eventtracker.EventTrackerFactory;
-import org.activityrecognition.client.model.EventResponseDTO;
-import org.activityrecognition.user.SessionManager;
+import org.activityrecognition.external.client.eventtracker.EventDTO;
+import org.activityrecognition.external.client.eventtracker.EventTrackerClient;
+import org.activityrecognition.external.client.eventtracker.EventTrackerFactory;
+import org.activityrecognition.external.client.model.EventResponseDTO;
+import org.activityrecognition.ui.user.SessionManager;
 
 import retrofit2.Call;
 import retrofit2.Callback;

@@ -19,13 +19,13 @@
             </intent-filter>
         </receiver>
         <activity
-            android:name="org.activityrecognition.predict.PredictActivity"
+            android:name=".ui.predict.PredictActivity"
             android:label="@string/title_activity_predict" />
         <activity
-            android:name="org.activityrecognition.collect.CollectActivity"
+            android:name=".ui.collect.CollectActivity"
             android:label="@string/title_activity_collect" />
         <activity
-            android:name="org.activityrecognition.user.LoginActivity"
+            android:name=".ui.user.LoginActivity"
             android:label="@string/title_activity_login" />
         <activity android:name="org.activityrecognition.MainActivity">
             <intent-filter>
@@ -34,7 +34,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="org.activityrecognition.user.SignUpActivity"
+        <activity android:name=".ui.user.SignUpActivity"
             android:label="@string/title_activity_signup" />
 
     </application>

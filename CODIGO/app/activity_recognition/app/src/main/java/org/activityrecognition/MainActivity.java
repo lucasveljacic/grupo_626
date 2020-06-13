@@ -11,15 +11,14 @@ import android.widget.TextView;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
-import org.activityrecognition.client.model.ModelDTO;
-import org.activityrecognition.client.model.ModelEvent;
-import org.activityrecognition.client.model.ModelState;
-import org.activityrecognition.collect.CollectActivity;
-import org.activityrecognition.core.BaseActivity;
+import org.activityrecognition.external.client.model.ModelDTO;
+import org.activityrecognition.external.client.model.ModelEvent;
+import org.activityrecognition.external.client.model.ModelState;
+import org.activityrecognition.ui.collect.CollectActivity;
 import org.activityrecognition.core.event.EventTrackerService;
 import org.activityrecognition.core.event.EventType;
-import org.activityrecognition.predict.PredictActivity;
-import org.activityrecognition.train.ModelTrainerViewModel;
+import org.activityrecognition.ui.predict.PredictActivity;
+import org.activityrecognition.ui.train.ModelTrainerViewModel;
 
 import retrofit2.Call;
 import retrofit2.Callback;
