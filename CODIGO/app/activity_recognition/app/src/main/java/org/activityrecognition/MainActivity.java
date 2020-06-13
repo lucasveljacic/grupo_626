@@ -64,11 +64,11 @@ public class MainActivity extends BaseActivity {
 
         eventTrackerService = new EventTrackerService(session);
 
-        ModelTrainerViewModel.Factory factory = new ModelTrainerViewModel.Factory(session, eventTrackerService, getModelClient());
+        ModelTrainerViewModel.Factory factory = new ModelTrainerViewModel.Factory(session, getModelClient());
         trainingViewModel = new ViewModelProvider(getViewModelStore(), factory)
                 .get(ModelTrainerViewModel.class);
 
-        observeElapsedTime();
+        observeProgressPercentage();
 
         // this must go at last as it needs view objects to be loaded
         refreshModelState();
@@ -100,8 +100,8 @@ public class MainActivity extends BaseActivity {
         });
     }
 
-    private void observeElapsedTime() {
-        trainingViewModel.getElapsedTime().observe(this, new Observer<Integer>() {
+    private void observeProgressPercentage() {
+        trainingViewModel.getProgressPercentage().observe(this, new Observer<Integer>() {
             @Override
             public void onChanged(Integer progress) {
                 trainingProgressDialog.setProgress(progress);
@@ -109,6 +109,9 @@ public class MainActivity extends BaseActivity {
                     trainingViewModel.finishTraining();
                     trainingProgressDialog.dismiss();
                     updateView();
+                    eventTrackerService.pushEvent(
+                            EventType.MODEL_TRAINED,
+                            String.format("Modelo %s entrenado exitosamente", session.getModelName()));
                 }
             }
         });
@@ -158,10 +161,16 @@ public class MainActivity extends BaseActivity {
     }
 
     private void logout() {
+        if (isOffline()) {
+            return;
+        }
         session.logoutUser();
     }
 
     private void resetModel() {
+        if (isOffline()) {
+            return;
+        }
         sendModelTransition(ModelEvent.RESET);
     }
 

@@ -6,8 +6,8 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
-import org.activityrecognition.external.client.model.ModelClient;
 import org.activityrecognition.core.event.EventTrackerService;
+import org.activityrecognition.external.client.model.ModelClient;
 import org.activityrecognition.ui.user.SessionManager;
 
 public class ModelTrainerViewModel extends ViewModel implements ModelTrainer.Listener {
@@ -16,8 +16,7 @@ public class ModelTrainerViewModel extends ViewModel implements ModelTrainer.Lis
     private MutableLiveData<Integer> progressPercentageLiveData = new MutableLiveData<>();
     private MutableLiveData<Boolean> isStartedLiveData = new MutableLiveData<>();
 
-    private ModelTrainerViewModel(SessionManager sessionManager, EventTrackerService eventTrackerService, ModelClient client) {
-        modelTrainer.setEventTrackerService(eventTrackerService);
+    private ModelTrainerViewModel(SessionManager sessionManager, ModelClient client) {
         modelTrainer.setSession(sessionManager);
         modelTrainer.setClient(client);
         modelTrainer.setListener(this);
@@ -35,7 +34,7 @@ public class ModelTrainerViewModel extends ViewModel implements ModelTrainer.Lis
         progressPercentageLiveData.postValue(progressPercentage);
     }
 
-    public LiveData<Integer> getElapsedTime() {
+    public LiveData<Integer> getProgressPercentage() {
         return progressPercentageLiveData;
     }
 
@@ -56,11 +55,9 @@ public class ModelTrainerViewModel extends ViewModel implements ModelTrainer.Lis
 
     public static class Factory extends ViewModelProvider.NewInstanceFactory {
         private SessionManager session;
-        private EventTrackerService eventTrackerService;
         private ModelClient client;
-        public Factory(SessionManager sessionManager, EventTrackerService eventTrackerService, ModelClient client) {
+        public Factory(SessionManager sessionManager, ModelClient client) {
             this.session = sessionManager;
-            this.eventTrackerService = eventTrackerService;
             this.client = client;
         }
 
@@ -68,7 +65,7 @@ public class ModelTrainerViewModel extends ViewModel implements ModelTrainer.Lis
         @NonNull
         @Override
         public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
-            return (T) new ModelTrainerViewModel(session, eventTrackerService, client);
+            return (T) new ModelTrainerViewModel(session, client);
         }
     }
 }

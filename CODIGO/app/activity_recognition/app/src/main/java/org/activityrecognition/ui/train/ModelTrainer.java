@@ -35,7 +35,6 @@ public class ModelTrainer {
 
     private SessionManager session;
     private ModelClient client;
-    private EventTrackerService eventTrackerService;
 
     public void setSession(SessionManager session) {
         this.session = session;
@@ -43,10 +42,6 @@ public class ModelTrainer {
 
     public void setClient(ModelClient client) {
         this.client = client;
-    }
-
-    public void setEventTrackerService(EventTrackerService eventTrackerService) {
-        this.eventTrackerService = eventTrackerService;
     }
 
     @Nullable

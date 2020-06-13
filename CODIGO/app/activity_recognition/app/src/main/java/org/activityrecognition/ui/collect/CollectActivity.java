@@ -46,17 +46,6 @@ public class CollectActivity extends BaseActivity implements PacketListenerForCo
 
         SensorManager sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         sensorPacketCollector = new SensorCollectorForCollect(sensorManager);
-
-        switch (session.getModelState()) {
-            case NEW:
-                session.setModelState(ModelState.COLLECTING_1);
-                showExplanationDialog();
-                break;
-            case COLLECTED_1:
-                session.setModelState(ModelState.COLLECTING_2);
-                showExplanationDialog();
-                break;
-        }
     }
 
     @Override
@@ -77,13 +66,10 @@ public class CollectActivity extends BaseActivity implements PacketListenerForCo
     public void onResume() {
         super.onResume();
         sentDataPackets = session.getSentDataPackets(0);
-        startActivityActions();
+        if (!allPacketsCollected()) {
+            startActivityActions();
+        }
         updateView();
-    }
-
-    @Override
-    protected void updateView() {
-        txtDataPackets.setText(getString(R.string.data_packets, sentDataPackets));
     }
 
     private void stopActivityActions() {
@@ -96,19 +82,6 @@ public class CollectActivity extends BaseActivity implements PacketListenerForCo
         sensorPacketCollector.start();
     }
 
-    private void showExplanationDialog() {
-        actionsStopped = true;
-        AlertDialog alertDialog = new AlertDialog.Builder(CollectActivity.this).create();
-        alertDialog.setCanceledOnTouchOutside(false);
-        alertDialog.setMessage(getString(R.string.text_instructions_collect));
-        alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.accept_btn_msg),
-                (dialog, which) -> {
-                    actionsStopped = false;
-                    dialog.dismiss();
-                });
-        alertDialog.show();
-    }
-
     @Override
     public void onPackageComplete(List<String> packet) {
         if (actionsStopped) {
@@ -119,7 +92,7 @@ public class CollectActivity extends BaseActivity implements PacketListenerForCo
             interruptCollectionOnOffline();
         }
 
-        if (sentDataPackets >= COLLECTION_MAX_PACKS-1) {
+        if (allPacketsCollected()) {
             endOfCollection();
         }
 
@@ -155,8 +128,56 @@ public class CollectActivity extends BaseActivity implements PacketListenerForCo
         } else {
             sendModelTransition(ModelEvent.END_COLLECT_2);
         }
+    }
 
+    @Override
+    protected void updateView() {
+        switch (session.getModelState()) {
+            case NEW:
+                showExplanationDialog();
+                break;
+            case COLLECTED_1:
+                if (userId.equals(USER_1)) {
+                    showEndDialog();
+                } else {
+                    showExplanationDialog();
+                }
+                break;
+            case COLLECTED_2:
+                showEndDialog();
+                break;
+            case COLLECTING_1:
+            case COLLECTING_2:
+                txtDataPackets.setText(getString(R.string.data_packets, sentDataPackets));
+                break;
+        }
+
+        txtDataPackets.setText(getString(R.string.data_packets, sentDataPackets));
+    }
+
+    private void showExplanationDialog() {
+        actionsStopped = true;
+        AlertDialog alertDialog = new AlertDialog.Builder(CollectActivity.this).create();
+        alertDialog.setCanceledOnTouchOutside(false);
+        alertDialog.setCancelable(false);
+        alertDialog.setMessage(getString(R.string.text_instructions_collect));
+        alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.accept_btn_msg),
+                (dialog, which) -> {
+                    actionsStopped = false;
+                    if (userId.equals(USER_1)) {
+                        session.setModelState(ModelState.COLLECTING_1);
+                    } else {
+                        session.setModelState(ModelState.COLLECTING_2);
+                    }
+                    dialog.dismiss();
+                });
+        alertDialog.show();
+    }
+
+    private void showEndDialog() {
         AlertDialog alertDialog = buildDialog(getString(R.string.end_of_data_collection_msg));
+        alertDialog.setCanceledOnTouchOutside(false);
+        alertDialog.setCancelable(false);
         alertDialog.setButton(
                 AlertDialog.BUTTON_POSITIVE,
                 "ACEPTAR",
@@ -199,5 +220,9 @@ public class CollectActivity extends BaseActivity implements PacketListenerForCo
             sentDataPackets = 0;
             session.setSentDataPackets(sentDataPackets);
         }
+    }
+
+    private boolean allPacketsCollected() {
+        return session.getSentDataPackets(0) >= COLLECTION_MAX_PACKS - 1;
     }
 }
