@@ -33,6 +33,10 @@
     <string name="hint_collect_text">Ingrese el texto de arriba.</string>
     <string name="prediction_label_default">\?</string>
     <string name="finish">FINALIZAR</string>
-    <string name="text_instructions_collect">La captura de datos durará 60 segundos. Ingrese el texto debajo si lo desea, o bien realice alguna acción como moverse, caminar, etc, para que el modelo aprenda a reconocerlas.</string>
+    <string name="text_instructions_collect">La captura de datos sera de 60 paquetes de datos de los sensores. Durará aproximadamente 1 minuto. Ingrese el texto debajo si lo desea, o bien realice alguna acción como moverse, caminar, etc, para que el modelo aprenda a reconocerlas.</string>
     <string name="text_instructions_prediction">Relice alguna acción como moverse, caminar, o ingrese el texto debajo para que el modelo pueda reconocerlo.</string>
+    <string name="data_packets">Paquetes enviados: %d</string>
+    <string name="offline_error_msg">Sin conexión a Internet. Inténtelo de nuevo más tarde.</string>
+    <string name="end_of_data_collection_msg">Fin de la captura de datos</string>
+    <string name="accept_btn_msg">COMENZAR</string>
 </resources>

@@ -2,50 +2,51 @@ package org.activityrecognition;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
 
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 
-import org.activityrecognition.client.model.EventResponseDTO;
-import org.activityrecognition.client.model.ModelClient;
-import org.activityrecognition.client.model.ModelClientFactory;
-import org.activityrecognition.client.model.ModelDTO;
-import org.activityrecognition.client.model.ModelEvent;
-import org.activityrecognition.client.model.ModelState;
-import org.activityrecognition.event.EventTrackerService;
-import org.activityrecognition.event.EventType;
-import org.activityrecognition.user.SessionManager;
-
-import java.io.IOException;
+import org.activityrecognition.core.event.EventTrackerService;
+import org.activityrecognition.core.event.EventType;
+import org.activityrecognition.external.client.model.ModelDTO;
+import org.activityrecognition.external.client.model.ModelEvent;
+import org.activityrecognition.external.client.model.ModelState;
+import org.activityrecognition.ui.collect.CollectActivity;
+import org.activityrecognition.ui.predict.PredictActivity;
+import org.activityrecognition.ui.train.ModelTrainerViewModel;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class MainActivity extends AppCompatActivity {
-    private static final int COLLECT_TIME_SEC = 60;
+public class MainActivity extends BaseActivity {
+    private static final int COLLECTION_MAX_PACKS = 60;
     private final String TAG = "ACTREC_MENU";
 
-    private SessionManager session;
     private Button collectUser1Button;
     private Button collectUser2Button;
     private Button trainButton;
     private Button predictButton;
     private Button resetButton;
     private Button logoutButton;
-    private ModelClient modelClient;
     private EventTrackerService eventTrackerService;
+
+    private ModelTrainerViewModel trainingViewModel;
+
+    ProgressDialog trainingProgressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "performing onCreate()");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        session = new SessionManager(getApplicationContext());
         session.checkLogin();
+
+        trainingProgressDialog = new ProgressDialog(this);
 
         collectUser1Button = findViewById(R.id.btn_collect_user_1);
         collectUser2Button = findViewById(R.id.btn_collect_user_2);
@@ -57,24 +58,84 @@ public class MainActivity extends AppCompatActivity {
         collectUser1Button.setOnClickListener(v -> collectUser1Metrics());
         collectUser2Button.setOnClickListener(v -> collectUser2Metrics());
         predictButton.setOnClickListener(v -> startPrediction());
-        trainButton.setOnClickListener(v -> startTraining());
+        trainButton.setOnClickListener(v -> handleTraining());
         resetButton.setOnClickListener(v -> resetModel());
         logoutButton.setOnClickListener(v -> logout());
 
-        if (session.getModelState() == null) {
-            createModel();
-        }
         eventTrackerService = new EventTrackerService(session);
+
+        ModelTrainerViewModel.Factory factory = new ModelTrainerViewModel.Factory(session, getModelClient());
+        trainingViewModel = new ViewModelProvider(getViewModelStore(), factory)
+                .get(ModelTrainerViewModel.class);
+
+        observeProgressPercentage();
+
+        // this must go at last as it needs view objects to be loaded
+        refreshModelState();
+    }
+
+    protected void refreshModelState() {
+        getModelClient().get(session.getModelName()).enqueue(new Callback<ModelDTO>() {
+            @Override
+            public void onResponse(Call<ModelDTO> call, Response<ModelDTO> response) {
+                if (response.isSuccessful()) {
+                    ModelState state = response.body().getState();
+                    if (state != null) {
+                        Log.i(TAG, String.format("Loaded model state: %s", state));
+                        session.setModelState(state);
+                        updateView();
+                    }
+                } else if (response.code() == 404) {
+                    createModel();
+                } else {
+                    Log.e(TAG, String.format("Unable to load model state! Response code: %d", response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ModelDTO> call, Throwable t) {
+                Log.e(TAG, "Unable to load model state. "+ t.getMessage());
+                t.printStackTrace();
+            }
+        });
+    }
+
+    private void observeProgressPercentage() {
+        trainingViewModel.getProgressPercentage().observe(this, new Observer<Integer>() {
+            @Override
+            public void onChanged(Integer progress) {
+                trainingProgressDialog.setProgress(progress);
+                if (progress == 100) {
+                    trainingViewModel.finishTraining();
+                    trainingProgressDialog.dismiss();
+                    updateView();
+                    eventTrackerService.pushEvent(
+                            EventType.MODEL_TRAINED,
+                            String.format("Modelo %s entrenado exitosamente", session.getModelName()));
+                }
+            }
+        });
     }
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         super.onResume();
+        Log.d(TAG, "performing onResume()");
         updateView();
     }
 
+    @Override
+    public void onStop() {
+        super.onStop();
+    }
+
+    @Override
+    public void onBackPressed() {
+        moveTaskToBack(true);
+    }
+
     private void createModel() {
-        disableActions();
+        disableControls();
         String modelName = session.getModelName();
         // launch a thread with the http call to the external service
         Call<ModelDTO> call = getModelClient().create(modelName);
@@ -100,70 +161,78 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void logout() {
+        if (isOffline()) {
+            return;
+        }
         session.logoutUser();
     }
 
     private void resetModel() {
-        disableActions();
-        // launch a thread with the http call to the external service
-        Call<EventResponseDTO> call = getModelClient().pushEvent(session.getModelName(), ModelEvent.RESET.name());
-        call.enqueue(new Callback<EventResponseDTO>() {
-            @Override
-            public void onResponse(Call<EventResponseDTO> call, Response<EventResponseDTO> response) {
-                if (response.isSuccessful()) {
-                    Log.i(TAG, "Model reset successfully!");
-                    session.setModelState(ModelState.NEW);
-                } else {
-                    Log.e(TAG, response.message());
-                }
-                updateView();
-            }
-
-            @Override
-            public void onFailure(Call<EventResponseDTO> call, Throwable t) {
-                Log.e(TAG, "Unable to submit post to API. "+ t.getMessage());
-                t.printStackTrace();
-                updateView();
-            }
-        });
+        if (isOffline()) {
+            return;
+        }
+        sendModelTransition(ModelEvent.RESET);
     }
 
-    private void startTraining() {
-        disableActions();
-        TriggerTrainingAsyncTaskRunner runner = new TriggerTrainingAsyncTaskRunner();
-        runner.execute();
+    private void handleTraining() {
+        if (isOffline()) {
+            return;
+        }
+        trainingViewModel.start();
+        showTrainingProgressBar();
     }
 
     private void collectUser1Metrics() {
-        disableActions();
+        if (isOffline()) {
+            return;
+        }
+        disableControls();
         collectUserMetrics("1");
     }
     private void collectUser2Metrics() {
-        disableActions();
+        if (isOffline()) {
+            return;
+        }
+        disableControls();
         collectUserMetrics("2");
     }
 
+    private void showTrainingProgressBar() {
+        trainingProgressDialog.setTitle("Entrenando el modelo");
+        trainingProgressDialog.setMessage("Esta tarea puede demorar varios minutos ...");
+        trainingProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        trainingProgressDialog.setCancelable(false);
+        trainingProgressDialog.setMax(100);
+        trainingProgressDialog.show();
+    }
+
     private void collectUserMetrics(String id) {
-        disableActions();
+        disableControls();
         Intent intent = new Intent(getApplicationContext(), CollectActivity.class);
         intent.putExtra("USER_ID", id);
-        intent.putExtra("COLLECTION_TIME_SEC", COLLECT_TIME_SEC);
+        intent.putExtra("COLLECTION_MAX_PACKS", COLLECTION_MAX_PACKS);
         startActivity(intent);
     }
 
     private void startPrediction() {
+        if (isOffline()) {
+            return;
+        }
         Intent intent = new Intent(getApplicationContext(), PredictActivity.class);
         startActivity(intent);
     }
 
-    private void disableActions() {
+    @Override
+    protected void disableControls() {
         collectUser1Button.setEnabled(false);
         collectUser2Button.setEnabled(false);
         trainButton.setEnabled(false);
         predictButton.setEnabled(false);
     }
-    private void updateView() {
-        disableActions();
+
+    @Override
+    protected void updateView() {
+        disableControls();
         ModelState modelState = session.getModelState();
 
         if (modelState == null) {
@@ -172,89 +241,23 @@ public class MainActivity extends AppCompatActivity {
 
         switch (modelState) {
             case NEW:
+            case COLLECTING_1:
                 collectUser1Button.setEnabled(true);
                 break;
             case COLLECTED_1:
+            case COLLECTING_2:
                 collectUser2Button.setEnabled(true);
                 break;
             case COLLECTED_2:
                 trainButton.setEnabled(true);
                 break;
+            case TRAINING:
+            case READY_TO_SERVE:
+                handleTraining();
+                break;
             case SERVING:
                 predictButton.setEnabled(true);
                 break;
         }
-    }
-
-    private ModelClient getModelClient() {
-        if (modelClient == null) {
-            modelClient = ModelClientFactory.getClient();
-        }
-        return modelClient;
-    }
-
-    // inner class to handle training waiting
-    private class TriggerTrainingAsyncTaskRunner extends AsyncTask<String, String, String> {
-        ProgressDialog progressDialog;
-
-        @Override
-        protected String doInBackground(String... params) {
-            String modelName = session.getModelName();
-
-            // launch a thread with the http call to the external service
-            Call<EventResponseDTO> call = getModelClient().pushEvent(modelName, ModelEvent.START_TRAINING.name());
-            try {
-                Response<EventResponseDTO> response = call.execute();
-                if (response.isSuccessful()) {
-                    Log.i(TAG, String.format("Event %s sent successfully!", ModelEvent.START_TRAINING.name()));
-
-                    Call<ModelDTO> callGet;
-                    Response<ModelDTO> responseGet;
-                    ModelState state = null;
-
-                    int totalSleepSeconds = 0;
-                    do {
-                        callGet = getModelClient().get(modelName);
-                        responseGet = callGet.execute();
-                        if (responseGet.isSuccessful()) {
-                            state = responseGet.body().getState();
-                        }
-                        Thread.sleep(5 * 1000);
-                        totalSleepSeconds += 5;
-                    } while (state != ModelState.SERVING && totalSleepSeconds < 300);
-
-                    eventTrackerService.pushEvent(EventType.MODEL_TRAINED, String.format("Modelo %s entrenado exitosamente", modelName));
-
-                    session.setModelState(ModelState.SERVING);
-                } else {
-                    Log.e(TAG, response.message());
-                }
-            } catch (IOException | InterruptedException e) {
-                Log.e(TAG, "Unable submit event. "+ e.getMessage());
-                e.printStackTrace();
-            }
-            return "FINISHED";
-        }
-
-        @Override
-        protected void onPostExecute(String modelState) {
-            Log.e(TAG, "Model state result: "+ modelState);
-            updateView();
-            progressDialog.dismiss();
-        }
-
-        @Override
-        protected void onPreExecute() {
-            progressDialog = ProgressDialog.show(MainActivity.this,
-                    "Entrenando el modelo",
-                    "Aguarde por favor... esta tarea puede demorar varios minutos");
-        }
-
-        @Override
-        protected void onProgressUpdate(String... text) {}
-    }
-    @Override
-    public void onBackPressed() {
-        moveTaskToBack(true);
     }
 }
