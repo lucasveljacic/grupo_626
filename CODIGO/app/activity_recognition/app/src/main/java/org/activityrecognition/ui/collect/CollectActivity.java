@@ -225,6 +225,6 @@ public class CollectActivity extends BaseActivity implements PacketListenerForCo
     }
 
     private boolean allPacketsCollected() {
-        return session.getSentDataPackets(0) >= COLLECTION_MAX_PACKS - 1;
+        return session.getSentDataPackets(0) >= COLLECTION_MAX_PACKS;
     }
 }

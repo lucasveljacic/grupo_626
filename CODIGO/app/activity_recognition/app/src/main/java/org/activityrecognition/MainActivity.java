@@ -184,8 +184,9 @@ public class MainActivity extends BaseActivity {
         }
         sendModelTransition(ModelEvent.RESET);
 
-        // cleaning prediction list
+        // cleaning session data
         session.setLastPredictions(new ArrayList<>());
+        session.setSentDataPackets(0);
     }
 
     private void handleTraining() {
