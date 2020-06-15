@@ -6,6 +6,11 @@ utilizando Machine Learning y datos de métricas recolectadas de los sensores de
 
 
 ## CHANGELOG
+**Version: v0.3**
+* Agregada lista de últimas 10 predicciones realizadas. Se agregó un nuevo botón donde se puede 
+acceder a este listado.
+
+
 **Version: v0.2**
 * Fix en entrenamiento del modelo dentro de la APP en caso de change orientatión.
 * Manejo de desconexión a Internet en todos los Activities de la APP. 

@@ -5,9 +5,14 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 
+import com.google.gson.Gson;
+
 import org.activityrecognition.external.client.model.ModelState;
 
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class SessionManager {
     private static SessionManager instance;
@@ -22,6 +27,7 @@ public class SessionManager {
     public static final String KEY_MODEL_NAME = "modelName";
     public static final String KEY_MODEL_STATE = "modelState";
     private static final String KEY_SENT_DATA_PACKETS = "sentDataPackets";
+    private static final String KEY_LAST_PREDICTIONS = "lastPredictionsList";
 
     public static SessionManager getInstance(Context context) {
         if (instance == null) {
@@ -81,6 +87,23 @@ public class SessionManager {
         editor.commit();
     }
 
+    synchronized public void setLastPredictions(List<String> lastPredictionsList) {
+        Gson gson = new Gson();
+        editor.putString(KEY_LAST_PREDICTIONS, gson.toJson(new LastPredictionsList(lastPredictionsList)));
+        editor.commit();
+    }
+
+    synchronized public List<String> getLastPredictions() {
+        String lastPredictionsJson = pref.getString(KEY_LAST_PREDICTIONS, null);
+        if (lastPredictionsJson == null) {
+            return new ArrayList<>();
+        }
+
+        Gson gson = new Gson();
+        LastPredictionsList lastPredictionsList = gson.fromJson(lastPredictionsJson, LastPredictionsList.class);
+        return lastPredictionsList.getLastPredictions();
+    }
+
     public int getSentDataPackets(int defValue) {
         return Integer.parseInt(pref.getString(KEY_SENT_DATA_PACKETS, String.valueOf(defValue)));
     }
@@ -105,4 +128,20 @@ public class SessionManager {
         return pref.getBoolean(IS_LOGGED_IN, false);
     }
 
+    // clase utilizada para serializar la lista de Predicciones
+    private class LastPredictionsList implements Serializable {
+        private List<String> lastPredictions;
+
+        public LastPredictionsList(List<String> lastPredictions) {
+            this.lastPredictions = lastPredictions;
+        }
+
+        public List<String> getLastPredictions() {
+            return lastPredictions;
+        }
+
+        public void setLastPredictions(List<String> lastPredictions) {
+            this.lastPredictions = lastPredictions;
+        }
+    }
 }

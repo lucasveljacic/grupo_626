@@ -7,12 +7,14 @@ import android.widget.Button;
 
 import androidx.appcompat.app.AlertDialog;
 
+import org.activityrecognition.BaseActivity;
 import org.activityrecognition.R;
 import org.activityrecognition.external.client.model.ModelClient;
 import org.activityrecognition.external.client.model.ModelClientFactory;
 import org.activityrecognition.external.client.model.PredictionInputDTO;
 import org.activityrecognition.external.client.model.PredictionOutputDTO;
-import org.activityrecognition.BaseActivity;
+
+import java.util.LinkedList;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -24,6 +26,7 @@ public class PredictActivity extends BaseActivity implements PacketListenerForPr
     private Button closeButton;
     private Button predictionButton;
     private SensorCollectorForPrediction sensorCollectorForPrediction;
+    private LimitedQueue<String> predictionList = new LimitedQueue<>(10);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +45,9 @@ public class PredictActivity extends BaseActivity implements PacketListenerForPr
         sensorCollectorForPrediction.start();
 
         sensorCollectorForPrediction.registerListener(this);
+
+        // loading saved prediction list
+        predictionList.addAll(session.getLastPredictions());
     }
 
     private ModelClient getClient() {
@@ -54,7 +60,12 @@ public class PredictActivity extends BaseActivity implements PacketListenerForPr
     private void backMenu() {
         sensorCollectorForPrediction.stop();
         sensorCollectorForPrediction.unregisterListener();
+        savePredictionList();
         finish();
+    }
+
+    private void savePredictionList() {
+        session.setLastPredictions(predictionList);
     }
 
     @Override
@@ -86,6 +97,8 @@ public class PredictActivity extends BaseActivity implements PacketListenerForPr
                     Log.i(TAG, String.format("Prediction: %f", response.body().getPrediction()));
 
                     predictionButton.setText(txtPrediction);
+
+                    predictionList.add(txtPrediction);
                 } else {
                     Log.e(TAG, response.message());
                 }
@@ -134,5 +147,19 @@ public class PredictActivity extends BaseActivity implements PacketListenerForPr
                     PredictActivity.this.finish();
                 });
         alertDialog.show();
+    }
+
+    private class LimitedQueue<E> extends LinkedList<E> {
+        private int limit;
+        public LimitedQueue(int limit) {
+            this.limit = limit;
+        }
+
+        @Override
+        public boolean add(E o) {
+            super.add(o);
+            while (size() > limit) { super.remove(); }
+            return true;
+        }
     }
 }
