@@ -15,8 +15,11 @@ import org.activityrecognition.external.client.model.ModelDTO;
 import org.activityrecognition.external.client.model.ModelEvent;
 import org.activityrecognition.external.client.model.ModelState;
 import org.activityrecognition.ui.collect.CollectActivity;
+import org.activityrecognition.ui.predict.LastPredictionsActivity;
 import org.activityrecognition.ui.predict.PredictActivity;
 import org.activityrecognition.ui.train.ModelTrainerViewModel;
+
+import java.util.ArrayList;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -30,6 +33,7 @@ public class MainActivity extends BaseActivity {
     private Button collectUser2Button;
     private Button trainButton;
     private Button predictButton;
+    private Button predictionListButton;
     private Button resetButton;
     private Button logoutButton;
     private EventTrackerService eventTrackerService;
@@ -54,6 +58,7 @@ public class MainActivity extends BaseActivity {
         logoutButton = findViewById(R.id.btn_loguot);
         trainButton = findViewById(R.id.btn_train);
         predictButton = findViewById(R.id.btn_predict);
+        predictionListButton = findViewById(R.id.btn_prediction_list);
 
         collectUser1Button.setOnClickListener(v -> collectUser1Metrics());
         collectUser2Button.setOnClickListener(v -> collectUser2Metrics());
@@ -61,6 +66,7 @@ public class MainActivity extends BaseActivity {
         trainButton.setOnClickListener(v -> handleTraining());
         resetButton.setOnClickListener(v -> resetModel());
         logoutButton.setOnClickListener(v -> logout());
+        predictionListButton.setOnClickListener(v -> goToPredictionList());
 
         eventTrackerService = new EventTrackerService(session);
 
@@ -72,6 +78,11 @@ public class MainActivity extends BaseActivity {
 
         // this must go at last as it needs view objects to be loaded
         refreshModelState();
+    }
+
+    private void goToPredictionList() {
+        Intent intent = new Intent(getApplicationContext(), LastPredictionsActivity.class);
+        startActivity(intent);
     }
 
     protected void refreshModelState() {
@@ -172,6 +183,9 @@ public class MainActivity extends BaseActivity {
             return;
         }
         sendModelTransition(ModelEvent.RESET);
+
+        // cleaning prediction list
+        session.setLastPredictions(new ArrayList<>());
     }
 
     private void handleTraining() {
@@ -228,6 +242,7 @@ public class MainActivity extends BaseActivity {
         collectUser2Button.setEnabled(false);
         trainButton.setEnabled(false);
         predictButton.setEnabled(false);
+        predictionListButton.setEnabled(false);
     }
 
     @Override
@@ -257,6 +272,7 @@ public class MainActivity extends BaseActivity {
                 break;
             case SERVING:
                 predictButton.setEnabled(true);
+                predictionListButton.setEnabled(true);
                 break;
         }
     }

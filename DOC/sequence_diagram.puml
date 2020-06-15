@@ -1,0 +1,126 @@
+@startuml
+autonumber
+
+title Caso de uso Principal: Predicción de Usuario
+
+actor user AS "Usuario\njuan@gmail.com"
+participant main AS "Main\nActivity"
+participant collect AS "Collect\nActivity"
+participant predict  AS "Predict\nActivity"
+
+participant model  AS "Model\nService"
+participant tf  AS "Tensorflow\nService"
+participant train  AS "Script\ntrain.py"
+participant event  AS "Event\nTracker"
+
+activate main
+
+... **RECOLECCION DE METRICAS USUARIO 1** ...
+
+
+    user -> main : Pulsa Boton \n"CAPTURA USUARIO 1"
+
+    main -> collect : comienzo captura \nusuario 1
+    activate collect
+        loop 60 veces
+            collect -> collect : collecta metricas \nde sensores
+            collect -> model : POST /models/juan_gmail_com/measures/1
+            activate model
+                model -> model : Guardar paquete \nusuario 1\n en filesystem
+                model -> collect
+            deactivate model
+        end
+
+        collect -> model: POST /models/juan_gmail_com/events/END_COLLECT_2
+
+        collect -> main : fin caltura usuario 1
+    deactivate collect
+
+    main -> user : Activa Boton \n"CAPTURA USUARIO 2"
+
+... **RECOLECCION DE METRICAS USUARIO 2** ...
+
+
+    user -> main : Pulsa Boton \n"CAPTURA USUARIO 2"
+    main -> collect : comienzo captura \nusuario 2
+    activate collect
+        loop 60 veces
+            collect -> collect : collecta metricas \nde sensores
+            collect -> model : POST /models/juan_gmail_com/measures/2
+            activate model
+                model -> model : Guardar paquete \nusuario 2\n en filesystem
+                model -> collect
+            deactivate model
+        end
+
+        collect -> model: POST /models/juan_gmail_com/events/END_COLLECT_2
+
+        collect -> main : fin caltura usuario 2
+    deactivate collect
+
+    main -> user : Activa Boton \n"ENTRENAR EL MODELO"
+
+... **ENTRENAMIENTO DEL MODELO** ...
+
+    user -> main : Pulsa Boton \n"ENTRENAR MODELO"
+    main -> main : muestra ProgressBar \n con 0% de avance
+
+    main -> model : POST /models/juan_gmail_com/events/START_TRAINING
+    activate model
+        model -> train: lanza train.py \n(en thread dedicado) \ncon path a las \nmetricas recolectadas
+
+
+        model -> main : entrenamiento en progreso
+
+
+        train -> train : entrena modelo
+        train -> train : escribe modelo\n en file system
+
+
+        loop hasta que state=SERVING
+            main -> model : GET /models/juan_gmail_com
+            activate model
+                model -> tf : GET /v1/models/juan_gmail_com
+                activate tf
+                    tf -> model : state
+                deactivate tf
+                model -> main : Progreso [0-100]
+            deactivate model
+            main -> main : Actializa progreso \nde la ProgressBar
+        end
+
+        main -> main : Quita la ProgressBar
+
+        main -> event : POST /api/api/event \n(notifica fin de training)
+
+        main -> user : Activa Boton \n"PREDICCION DE USUARIO"
+
+    deactivate model
+
+... **INFERENCIA** ...
+
+    user -> main : Pulsa Boton \n"PREDICCION DE USUARIO"
+
+    main -> predict : Comienzo inferencias
+    activate predict
+        loop hasta que usuario pulsa Boton "FINALIZAR"
+            predict -> predict : collecta metricas \nde sensores
+            predict -> model : POST /models/juan_gmail_com/predictions
+            activate model
+                model -> tf : POST /v1/models/juan_gmail_com/versions/1:predict
+                activate tf
+                    tf -> model : probabilidad [0-1]
+                deactivate tf
+                model -> predict : probabilidad [0-1]
+            deactivate model
+            predict -> predict : Mostrar Inferencia \n(Usuario 1 o 2) \ncon su Probabilidad
+        end
+
+        predict -> main : fin de inferencias
+    deactivate predict
+
+    main -> user : Permanece activo el Boton \n"PREDICCION DE USUARIO"
+
+deactivate main
+
+@enduml
