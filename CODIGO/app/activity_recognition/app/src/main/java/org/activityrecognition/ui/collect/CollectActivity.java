@@ -90,10 +90,12 @@ public class CollectActivity extends BaseActivity implements PacketListenerForCo
 
         if (isOffline()) {
             interruptCollectionOnOffline();
+            return;
         }
 
         if (allPacketsCollected()) {
             endOfCollection();
+            return;
         }
 
         // launch a thread with the http call to the external service
